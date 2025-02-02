@@ -14,7 +14,7 @@ public class BinaryNeuralNetwork {
 	}
 	
 	public static void main(String[] args) {
-		System.out.println("BinaryNeuralNetwork v0.0.2");
+		System.out.println("BinaryNeuralNetwork v0.0.3");
 		BinaryNeuralNetwork app = new BinaryNeuralNetwork();
 		app.run();
 		System.out.println("exit.");
@@ -25,11 +25,9 @@ public class BinaryNeuralNetwork {
 	}
 	
 	private static class Node {
-		public int data = 0;
-		public int mask = 0;
-		public int weight = 0;
+		public byte data = 0;
+		public byte weight = 0;
 		public Node out = null;
-		public int outbit = 0;
 	}
 
 }
