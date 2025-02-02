@@ -5,4 +5,4 @@
 
 Neural node compute int64 -> bit:
 
-Output = OR (Input XOR Invert)
+Output = OR (Input XOR Invert Weights)
