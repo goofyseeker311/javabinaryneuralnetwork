@@ -25,9 +25,10 @@ public class BinaryNeuralNetwork {
 	}
 	
 	private static class Node {
-		public byte data = 0;
-		public byte weight = 0;
+		public long data = 0;
+		public long weight = 0;
 		public Node out = null;
+		public byte bitind = 0;
 	}
 
 }
