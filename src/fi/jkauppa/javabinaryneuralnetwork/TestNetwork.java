@@ -13,7 +13,7 @@ public class TestNetwork {
 	}
 	
 	public static void main(String[] args) {
-		System.out.println("BinaryNeuralNetwork v0.0.4");
+		System.out.println("BinaryNeuralNetwork v0.0.5");
 		TestNetwork app = new TestNetwork();
 		app.run();
 		System.out.println("exit.");

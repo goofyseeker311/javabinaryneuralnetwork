@@ -6,16 +6,24 @@ public class BinaryNeuralNetwork {
 	}
 
 	public static class Network {
-		Node[] inputlayer = null;
-		Node[] hiddenlayers = null;
-		Node[] outputlayer = null;
+		private int[] memory = null;
+		private int layerind = 0;
+		private int layerlen = 0;
+		private Node[] layers = null;
+		
+		public Network(int vmemorysize, int vlayerind, int vlayerlen, int vlayersize) {
+			memory = new int[vmemorysize];
+			layerind = vlayerind;
+			layerlen = vlayerlen;
+			layers = new Node[vlayersize];
+		}
 	}
 	
 	public static class Node {
-		public long data = 0;
-		public long weight = 0;
-		public Node out = null;
-		public byte bitind = 0;
+		public int input1ind = 0;
+		public int input2ind = 0;
+		public int xorweight = 0;
+		public int outputind = 0;
 	}
 
 }
