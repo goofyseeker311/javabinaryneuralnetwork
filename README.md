@@ -3,6 +3,6 @@
 * Binary neural network with 0/1 invert weights.
 * Trained with evolutionary reinforcement algorithm.
 
-Neural node compute int64 -> bit:
+Neural OR/NOR node compute [bit1,bit2] -> bit:
 
-Output = OR (Input XOR Invert Weights)
+Output = (Input1 OR Input2) XOR Weight
