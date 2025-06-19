@@ -9,3 +9,5 @@
 Neural OR/NOR node compute [bit1,bit2] -> bit:
 
 Output = (Input1 OR Input2) XOR Weight
+
+![binaryneurallogicpipelinecompute7a](https://github.com/user-attachments/assets/8382091c-1bb9-43f7-b805-79bfb9fedf3e)
