@@ -27,4 +27,25 @@ for n = 1:wordsn
   bwords(n,1) = wordsnind;
 endfor
 
+swords = spalloc(wordsn, wordsnind, wordsnind);
+swordsn = size(bwords,1);
+swordsm = size(bwords,2);
+
+for n = 1:swordsn
+  for m = 1:swordsm
+    bwordsind = bwords(n,m);
+    if (bwordsind > 0)
+      swords(n,bwordsind) = 1;
+    endif
+  endfor
+endfor
+
+#maxpcacomp = 6;
+#[u, s, v] = svds(swords, maxpcacomp);
+
+swordsfull = full(swords);
+swordsmean = mean(swordsfull,1);
+swordscentered = swordsfull - swordsmean;
+[u, s, v] = svd(swordscentered);
+
 
