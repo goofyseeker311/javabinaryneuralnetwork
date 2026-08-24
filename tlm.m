@@ -14,12 +14,12 @@ for n = 1:wordsn
   bwordm = size(byteword,2);
 
   for m = 1:bwordm
-    bwords(n,m+1) = cast(byteword(1,m),"int64") + 255*(m-1);
+    bwords(n,m+1) = cast(byteword(1,m),"int64") + (256*(m-1)-1);
   endfor
 endfor
 
 bwordsm = size(bwords,2)-1;
-bwordsm2 = bwordsm * 255 ;
+bwordsm2 = bwordsm * 256 - 1;
 
 for n = 1:wordsn
   wordsnind = bwordsm2 + n;
