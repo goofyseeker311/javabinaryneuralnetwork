@@ -60,7 +60,6 @@ for n = 1:wordsn
   b = vinv * a(ir)';
   c = v(:,ir)*b + swordsmean';
   acc(n) = c(bwordsm2+n);
-  printf("acc %i: %f\n",n,acc(n));
 endfor
 figure(2); plot(acc,'-o');
 
