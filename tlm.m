@@ -1,4 +1,4 @@
-clear; output_precision(16);
+close all; clear; output_precision(16);
 
 filename = "words.txt";
 fid = fopen(filename);
@@ -40,12 +40,13 @@ for n = 1:swordsn
   endfor
 endfor
 
-#maxpcacomp = 6;
-#[u, s, v] = svds(swords, maxpcacomp);
-
 swordsfull = full(swords);
 swordsmean = mean(swordsfull,1);
 swordscentered = swordsfull - swordsmean;
 [u, s, v] = svd(swordscentered);
 
+a = swordscentered(1,:);
+b = linsolve(v, a');
+c = v*b + swordsmean';
+plot(c,'-o');
 
