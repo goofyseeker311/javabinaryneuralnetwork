@@ -44,19 +44,20 @@ swordsfull = full(swords);
 swordsmean = mean(swordsfull,1);
 swordscentered = swordsfull - swordsmean;
 [u, s, v] = svd(swordscentered);
-vinv = inv(v);
+
+ir = 1:bwordsm2;
 
 a = swordscentered(1,:);
-b = linsolve(v, a');
-c = v*b + swordsmean';
+b = linsolve(v(ir,ir), a(ir)');
+c = v(:,ir)*b + swordsmean';
 figure(1); plot(c,'-o');
 
 acc = zeros(1,wordsn);
 
 for n = 1:wordsn
   a = swordscentered(n,:);
-  b = vinv * a';
-  c = v*b + swordsmean';
+  b = linsolve(v(ir,ir), a(ir)');
+  c = v(:,ir)*b + swordsmean';
   acc(n) = c(bwordsm2+n);
   printf("acc %i: %f\n",n,acc(n));
 endfor
