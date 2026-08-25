@@ -56,15 +56,14 @@ for n = 1:wordsn
   bb(:,n) = b;
 endfor
 
-v2 = (bb' \ eye(wordsn))';
-acc = zeros(1,wordsn);
+v2 = (bb'\eye(wordsn))';
+cc = v2*bb;
+[cwm,cim] = max(cc,[],1);
+acc = diag(cc);
 
 for n = 1:wordsn
-  c = v2*bb(:,n);
-  acc(n) = c(n);
-  [wm,im] = max(c);
-  if (n!=im)
-    printf("predicted(%i): %s, actual: %s\n",n,words{im},words{n});
+  if (n!=cim(n))
+    printf("predicted(%i): %s, actual: %s, conf: %f\n",n,words{cim(n)},words{n},acc(n));
   endif
 endfor
 figure(1); plot(acc,'-o');
@@ -95,10 +94,10 @@ im3 = is(wordsn-2);
 im4 = is(wordsn-3);
 im5 = is(wordsn-4);
 im6 = is(wordsn-5);
-printf("1. predicted(%i): %s, actual: %s, conf: %f\n",n,words{im1},word,wm1);
-printf("2. predicted(%i): %s, actual: %s, conf: %f\n",n,words{im2},word,wm2);
-printf("3. predicted(%i): %s, actual: %s, conf: %f\n",n,words{im3},word,wm3);
-printf("4. predicted(%i): %s, actual: %s, conf: %f\n",n,words{im4},word,wm4);
-printf("5. predicted(%i): %s, actual: %s, conf: %f\n",n,words{im5},word,wm5);
-printf("6. predicted(%i): %s, actual: %s, conf: %f\n",n,words{im6},word,wm6);
+printf("1. predicted(%i): %s, actual: %s, conf: %f\n",im1,words{im1},word,wm1);
+printf("2. predicted(%i): %s, actual: %s, conf: %f\n",im2,words{im2},word,wm2);
+printf("3. predicted(%i): %s, actual: %s, conf: %f\n",im3,words{im3},word,wm3);
+printf("4. predicted(%i): %s, actual: %s, conf: %f\n",im4,words{im4},word,wm4);
+printf("5. predicted(%i): %s, actual: %s, conf: %f\n",im5,words{im5},word,wm5);
+printf("6. predicted(%i): %s, actual: %s, conf: %f\n",im6,words{im6},word,wm6);
 
