@@ -56,12 +56,49 @@ for n = 1:wordsn
   bb(:,n) = b;
 endfor
 
-v2 = (bb' \ diag(ones(1,wordsn)))';
+v2 = (bb' \ eye(wordsn))';
 acc = zeros(1,wordsn);
 
 for n = 1:wordsn
   c = v2*bb(:,n);
   acc(n) = c(n);
+  [wm,im] = max(c);
+  if (n!=im)
+    printf("predicted(%i): %s, actual: %s\n",n,words{im},words{n});
+  endif
 endfor
-figure(2); plot(acc,'-o');
+figure(1); plot(acc,'-o');
+
+word = "homan";
+wordb = unicode2native(word, "ISO-8859-1");
+wordm = size(wordb,2);
+worda = zeros(1,bwordsm2);
+for m = 1:wordm
+  n = (256*(m-1)-1) + cast(wordb(m),"int64");
+  if (wordb(m) > 0)
+    worda(1,n) = 1;
+  endif
+endfor
+wordcentered = worda - swordsmean(ir);
+wordb = vinv * wordcentered';
+wordc = v2 * wordb;
+[ws,is] = sort(wordc);
+wm1 = ws(wordsn);
+wm2 = ws(wordsn-1);
+wm3 = ws(wordsn-2);
+wm4 = ws(wordsn-3);
+wm5 = ws(wordsn-4);
+wm6 = ws(wordsn-5);
+im1 = is(wordsn);
+im2 = is(wordsn-1);
+im3 = is(wordsn-2);
+im4 = is(wordsn-3);
+im5 = is(wordsn-4);
+im6 = is(wordsn-5);
+printf("1. predicted(%i): %s, actual: %s, conf: %f\n",n,words{im1},word,wm1);
+printf("2. predicted(%i): %s, actual: %s, conf: %f\n",n,words{im2},word,wm2);
+printf("3. predicted(%i): %s, actual: %s, conf: %f\n",n,words{im3},word,wm3);
+printf("4. predicted(%i): %s, actual: %s, conf: %f\n",n,words{im4},word,wm4);
+printf("5. predicted(%i): %s, actual: %s, conf: %f\n",n,words{im5},word,wm5);
+printf("6. predicted(%i): %s, actual: %s, conf: %f\n",n,words{im6},word,wm6);
 
