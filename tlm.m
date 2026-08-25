@@ -48,14 +48,7 @@ ir = 1:bwordsm2;
 [u, s, v] = svd(swordscentered(:,ir));
 vinv = inv(v);
 
-bb = zeros(bwordsm2,wordsn);
-
-for n = 1:wordsn
-  a = swordscentered(n,:);
-  b = vinv * a(ir)';
-  bb(:,n) = b;
-endfor
-
+bb = vinv * swordscentered(:,ir)';
 v2 = (bb'\eye(wordsn))';
 cc = v2*bb;
 [cwm,cim] = max(cc,[],1);
