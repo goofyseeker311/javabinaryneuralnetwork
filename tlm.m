@@ -43,23 +43,25 @@ endfor
 swordsfull = full(swords);
 swordsmean = mean(swordsfull,1);
 swordscentered = swordsfull - swordsmean;
-[u, s, v] = svd(swordscentered);
-
 ir = 1:bwordsm2;
-vinv = inv(v(ir,ir));
 
-a = swordscentered(1,:);
-b = vinv * a(ir)';
-c = v(:,ir)*b + swordsmean';
-figure(1); plot(c,'-o');
+[u, s, v] = svd(swordscentered(:,ir));
+vinv = inv(v);
 
-acc = zeros(1,wordsn);
+bb = zeros(bwordsm2,wordsn);
 
 for n = 1:wordsn
   a = swordscentered(n,:);
   b = vinv * a(ir)';
-  c = v(:,ir)*b + swordsmean';
-  acc(n) = c(bwordsm2+n);
+  bb(:,n) = b;
+endfor
+
+v2 = (bb' \ diag(ones(1,wordsn)))';
+acc = zeros(1,wordsn);
+
+for n = 1:wordsn
+  c = v2*bb(:,n);
+  acc(n) = c(n);
 endfor
 figure(2); plot(acc,'-o');
 
