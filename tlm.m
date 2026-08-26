@@ -43,7 +43,7 @@ vinv = inv(v);
 printf("svdinv (%i,%i).\n",size(v,1),size(v,2));
 
 bb = vinv * swordscentered';
-v2 = (bb'\eye(wordsn))';
+v2 = eye(wordsn)\bb';
 cc = v2*bb;
 [cwm,cim] = max(cc,[],1);
 acc = diag(cc);
