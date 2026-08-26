@@ -9,7 +9,7 @@ fclose (fid);
 wordsn = size(words,1);
 printf("words loaded (%i).\n",wordsn);
 
-bwords = cast(0,"int64");
+bwords = zeros(wordsn,32);
 for n = 1:wordsn
   byteword = unicode2native(words{n,1}, "ISO-8859-1");
   bwordm = size(byteword,2);
@@ -20,9 +20,11 @@ endfor
 
 swordsn = size(bwords,1);
 swordsm = size(bwords,2);
+charmax = max(max(bwords));
+charsum = sum(sum(bwords>0));
 printf("bwords (%i,%i).\n",swordsn,swordsm);
 
-swords = spalloc(wordsn,1,1);
+swords = spalloc(wordsn,charmax,charsum);
 for n = 1:swordsn
   for m = 1:swordsm
     bwordsind = bwords(n,m);
@@ -60,8 +62,8 @@ wordb = unicode2native(word, "ISO-8859-1");
 wordm = size(wordb,2);
 worda = zeros(1,swordslen);
 for m = 1:wordm
-  n = (256*(m-1)+1) + cast(wordb(m),"int64");
   if (wordb(m) > 0)
+    n = (256*(m-1)+1) + cast(wordb(m),"int64");
     worda(1,n) = 1;
   endif
 endfor
