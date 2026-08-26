@@ -7,30 +7,22 @@ words = words{1};
 fclose (fid);
 
 wordsn = size(words,1);
-bwords = cast(0,"int64");
+printf("words loaded (%i).\n",wordsn);
 
+bwords = cast(0,"int64");
 for n = 1:wordsn
   byteword = unicode2native(words{n,1}, "ISO-8859-1");
   bwordm = size(byteword,2);
-
   for m = 1:bwordm
-    bwords(n,m+1) = cast(byteword(1,m),"int64") + (256*(m-1)-1);
+    bwords(n,m) = cast(byteword(1,m),"int64") + (256*(m-1)+1);
   endfor
 endfor
 
-bwordsm = size(bwords,2)-1;
-bwordsm2 = bwordsm * 256 - 1;
-
-for n = 1:wordsn
-  wordsnind = bwordsm2 + n;
-  words(n,2) = wordsnind;
-  bwords(n,1) = wordsnind;
-endfor
-
-swords = spalloc(wordsn, wordsnind, wordsnind);
 swordsn = size(bwords,1);
 swordsm = size(bwords,2);
+printf("bwords (%i,%i).\n",swordsn,swordsm);
 
+swords = spalloc(wordsn,1,1);
 for n = 1:swordsn
   for m = 1:swordsm
     bwordsind = bwords(n,m);
@@ -43,12 +35,14 @@ endfor
 swordsfull = full(swords);
 swordsmean = mean(swordsfull,1);
 swordscentered = swordsfull - swordsmean;
-ir = 1:bwordsm2;
+swordslen = size(swordsfull,2);
+printf("swords (%i,%i).\n",size(swordsfull,1),swordslen);
 
-[u, s, v] = svd(swordscentered(:,ir));
+[u, s, v] = svd(swordscentered);
 vinv = inv(v);
+printf("svdinv (%i,%i).\n",size(v,1),size(v,2));
 
-bb = vinv * swordscentered(:,ir)';
+bb = vinv * swordscentered';
 v2 = (bb'\eye(wordsn))';
 cc = v2*bb;
 [cwm,cim] = max(cc,[],1);
@@ -64,14 +58,14 @@ figure(1); plot(acc,'-o');
 word = "homan";
 wordb = unicode2native(word, "ISO-8859-1");
 wordm = size(wordb,2);
-worda = zeros(1,bwordsm2);
+worda = zeros(1,swordslen);
 for m = 1:wordm
-  n = (256*(m-1)-1) + cast(wordb(m),"int64");
+  n = (256*(m-1)+1) + cast(wordb(m),"int64");
   if (wordb(m) > 0)
     worda(1,n) = 1;
   endif
 endfor
-wordcentered = worda - swordsmean(ir);
+wordcentered = worda - swordsmean;
 wordb = vinv * wordcentered';
 wordc = v2 * wordb;
 [ws,is] = sort(wordc);
