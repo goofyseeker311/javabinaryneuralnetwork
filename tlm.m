@@ -50,8 +50,9 @@ swordscentered = swordsfull - swordsmean;
 swordslen = size(swordsfull,2);
 printf("swords (%i,%i).\n",size(swordsfull,1),swordslen);
 
-[u, s, v] = svd(swordscentered);
-vinv = inv(v);
+svdcomps = 30;
+[u, s, v] = svds(swords,svdcomps);
+vinv = v\eye(swordslen);
 printf("svdinv (%i,%i).\n",size(v,1),size(v,2));
 
 bb = vinv * swordscentered';
