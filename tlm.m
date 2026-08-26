@@ -14,12 +14,22 @@ for n = 1:wordsn
   byteword = unicode2native(words{n,1}, "ISO-8859-1");
   bwordm = size(byteword,2);
   for m = 1:bwordm
-    bwords(n,m) = cast(byteword(1,m),"int64") + (256*(m-1)+1);
+    bwords(n,m) = cast(byteword(1,m),"int64") + 256*(m-1)+1;
   endfor
 endfor
 
+wordchars = nonzeros(unique(bwords));
+charinds(wordchars) = 1:length(wordchars);
 swordsn = size(bwords,1);
 swordsm = size(bwords,2);
+for n = 1:swordsn
+  for m = 1:swordsm
+    if (bwords(n,m)> 0)
+      bwords(n,m) = charinds(bwords(n,m));
+    endif
+  endfor
+endfor
+
 charmax = max(max(bwords));
 charsum = sum(sum(bwords>0));
 printf("bwords (%i,%i).\n",swordsn,swordsm);
@@ -55,7 +65,6 @@ for n = 1:wordsn
     printf("predicted(%i): %s, actual: %s, conf: %f\n",n,words{cim(n)},words{n},acc(n));
   endif
 endfor
-figure(1); plot(acc,'-o');
 
 word = "homan";
 wordb = unicode2native(word, "ISO-8859-1");
@@ -63,7 +72,7 @@ wordm = size(wordb,2);
 worda = zeros(1,swordslen);
 for m = 1:wordm
   if (wordb(m) > 0)
-    n = (256*(m-1)+1) + cast(wordb(m),"int64");
+    n = charinds(cast(wordb(m),"int64") + 256*(m-1)+1);
     worda(1,n) = 1;
   endif
 endfor
