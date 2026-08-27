@@ -57,13 +57,14 @@ printf("svdinv (%i,%i).\n",size(v,1),size(v,2));
 
 bb = vinv * swordscentered';
 v2 = eye(wordsn)\bb';
-cc = v2*bb;
-[cwm,cim] = max(cc,[],1);
-acc = diag(cc);
 
+acc = zeros(1,wordsn);
 for n = 1:wordsn
-  if (n!=cim(n))
-    printf("predicted(%i): %s, actual: %s, conf: %f\n",n,words{cim(n)},words{n},acc(n));
+  c = v2*bb(:,n);
+  acc(n) = c(n);
+  [wm,im] = max(c);
+  if (n!=im)
+    printf("predicted(%i): %s, actual: %s, conf: %f\n",n,words{im},words{n},acc(n));
   endif
 endfor
 
