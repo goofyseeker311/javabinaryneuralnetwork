@@ -1,12 +1,13 @@
 close all; clear; output_precision(16);
 
-filename = "words.txt";
+filename = "language.txt";
 fid = fopen(filename);
-words = textscan(fid, "%s");
+words = textscan(fid, "%[^\r\n]");
 words = words{1};
 fclose (fid);
 
-wordsn = size(words,1);
+wordsn = size(words,1)-1;
+words = words(1:wordsn,:);
 printf("words loaded (%i).\n",wordsn);
 
 bwords = zeros(wordsn,32);
@@ -65,11 +66,11 @@ for n = 1:wordsn
   acc(n) = c(n);
   [wm,im] = max(c);
   if (n!=im)
-    printf("predicted(%i): %s, actual: %s, conf: %f\n",n,words{im},words{n},acc(n));
+    printf("predicted(%i): '%s', actual: '%s', conf: %f\n",n,words{im},words{n},acc(n));
   endif
 endfor
 
-word = "homan";
+word = "talk";
 wordb = unicode2native(word, "ISO-8859-1");
 wordm = size(wordb,2);
 worda = zeros(1,swordslen);
@@ -93,10 +94,10 @@ im3 = is(wordsn-2);
 im4 = is(wordsn-3);
 im5 = is(wordsn-4);
 im6 = is(wordsn-5);
-printf("1. predicted(%i): %s, actual: %s, conf: %f\n",im1,words{im1},word,wm1);
-printf("2. predicted(%i): %s, actual: %s, conf: %f\n",im2,words{im2},word,wm2);
-printf("3. predicted(%i): %s, actual: %s, conf: %f\n",im3,words{im3},word,wm3);
-printf("4. predicted(%i): %s, actual: %s, conf: %f\n",im4,words{im4},word,wm4);
-printf("5. predicted(%i): %s, actual: %s, conf: %f\n",im5,words{im5},word,wm5);
-printf("6. predicted(%i): %s, actual: %s, conf: %f\n",im6,words{im6},word,wm6);
+printf("1. predicted(%i): '%s', actual: '%s', conf: %f\n",im1,words{im1},word,wm1);
+printf("2. predicted(%i): '%s', actual: '%s', conf: %f\n",im2,words{im2},word,wm2);
+printf("3. predicted(%i): '%s', actual: '%s', conf: %f\n",im3,words{im3},word,wm3);
+printf("4. predicted(%i): '%s', actual: '%s', conf: %f\n",im4,words{im4},word,wm4);
+printf("5. predicted(%i): '%s', actual: '%s', conf: %f\n",im5,words{im5},word,wm5);
+printf("6. predicted(%i): '%s', actual: '%s', conf: %f\n",im6,words{im6},word,wm6);
 
