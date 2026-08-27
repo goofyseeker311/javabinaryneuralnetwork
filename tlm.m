@@ -50,13 +50,14 @@ swordscentered = swordsfull - swordsmean;
 swordslen = size(swordsfull,2);
 printf("swords (%i,%i).\n",size(swordsfull,1),swordslen);
 
-svdcomps = 30;
+svdcomps = swordslen-1;
 [u, s, v] = svds(swords,svdcomps);
 vinv = v\eye(swordslen);
 printf("svdinv (%i,%i).\n",size(v,1),size(v,2));
 
 bb = vinv * swordscentered';
 v2 = eye(wordsn)\bb';
+v3 = v2 * vinv;
 
 acc = zeros(1,wordsn);
 for n = 1:wordsn
@@ -78,9 +79,7 @@ for m = 1:wordm
     worda(1,n) = 1;
   endif
 endfor
-wordcentered = worda - swordsmean;
-wordb = vinv * wordcentered';
-wordc = v2 * wordb;
+wordc = v3 * (worda - swordsmean)';
 [ws,is] = sort(wordc);
 wm1 = ws(wordsn);
 wm2 = ws(wordsn-1);
