@@ -1,6 +1,6 @@
 close all; clear; output_precision(16);
 
-filename = "language.txt";
+filename = "words.txt";
 fid = fopen(filename);
 words = textscan(fid, "%[^\r\n]");
 words = words{1};
@@ -70,7 +70,7 @@ for n = 1:wordsn
   endif
 endfor
 
-word = "talk";
+word = "homan";
 wordb = unicode2native(word, "ISO-8859-1");
 wordm = size(wordb,2);
 worda = zeros(1,swordslen);
