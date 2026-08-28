@@ -6,7 +6,7 @@ words = textscan(fid, "%[^\r\n]");
 words = words{1};
 fclose (fid);
 
-wordsn = size(words,1)-1;
+wordsn = size(words,1);
 words = lower(words(1:wordsn,:));
 printf("words loaded (%i).\n",wordsn);
 
@@ -19,23 +19,14 @@ for n = 1:wordsn
   endfor
 endfor
 
-wordchars = nonzeros(unique(bwords));
-charinds(wordchars) = 1:length(wordchars);
 swordsn = size(bwords,1);
 swordsm = size(bwords,2);
-for n = 1:swordsn
-  for m = 1:swordsm
-    if (bwords(n,m)> 0)
-      bwords(n,m) = charinds(bwords(n,m));
-    endif
-  endfor
-endfor
-
-charmax = max(max(bwords));
+swordslen = swordsm * 256;
+charmax = length(nonzeros(unique(bwords)));
 charsum = sum(sum(bwords>0));
 printf("bwords (%i,%i).\n",swordsn,swordsm);
 
-swords = spalloc(wordsn,charmax,charsum);
+swords = spalloc(wordsn,swordslen,charsum);
 for n = 1:swordsn
   for m = 1:swordsm
     bwordsind = bwords(n,m);
@@ -48,10 +39,9 @@ endfor
 swordsfull = full(swords);
 swordsmean = mean(swordsfull,1);
 swordscentered = swordsfull - swordsmean;
-swordslen = size(swordsfull,2);
-printf("swords (%i,%i).\n",size(swordsfull,1),swordslen);
+printf("swords (%i,%i).\n",size(swordsfull,1),size(swordsfull,2));
 
-svdcomps = swordslen-1;
+svdcomps = charmax-1;
 [u, s, v] = svds(swords,svdcomps);
 vinv = v\eye(swordslen);
 printf("svdinv (%i,%i).\n",size(v,1),size(v,2));
@@ -70,13 +60,13 @@ for n = 1:wordsn
   endif
 endfor
 
-word = "talk";
+word = "homan";
 wordb = unicode2native(word, "ISO-8859-1");
 wordm = size(wordb,2);
 worda = zeros(1,swordslen);
 for m = 1:wordm
   if (wordb(m) > 0)
-    n = charinds(cast(wordb(m),"int64") + 256*(m-1)+1);
+    n = cast(wordb(m),"int64") + 256*(m-1)+1;
     worda(1,n) = 1;
   endif
 endfor
