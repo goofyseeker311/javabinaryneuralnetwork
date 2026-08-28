@@ -7,7 +7,7 @@ words = words{1};
 fclose (fid);
 
 wordsn = size(words,1)-1;
-words = words(1:wordsn,:);
+words = lower(words(1:wordsn,:));
 printf("words loaded (%i).\n",wordsn);
 
 bwords = zeros(wordsn,32);
@@ -70,7 +70,7 @@ for n = 1:wordsn
   endif
 endfor
 
-word = "homan";
+word = "talk";
 wordb = unicode2native(word, "ISO-8859-1");
 wordm = size(wordb,2);
 worda = zeros(1,swordslen);
