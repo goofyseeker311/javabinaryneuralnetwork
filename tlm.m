@@ -43,7 +43,7 @@ printf("swords (%i,%i).\n",size(swordsfull,1),size(swordsfull,2));
 
 svdcomps = charmax-1;
 [u, s, v] = svd(swords);
-vinv = v(:,1:svdcomps)\eye(swordslen);
+vinv = (eye(swordslen)/v(:,1:svdcomps)')';
 printf("svdinv (%i,%i).\n",size(v,1),size(v,2));
 
 bb = vinv * swordscentered';
