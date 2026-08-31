@@ -17,23 +17,31 @@ printf("swords (%i,%i).\n",size(swordsfull,1),swordslen);
 vinv = (eye(swordslen)/v')';
 printf("svdinv (%i,%i).\n",size(v,1),size(v,2));
 
+#aa = eye(wordsn);
+aa = zeros(wordsn,10);
+for n = 1:wordsn
+  aa(n,labels(n)+1) = 1;
+endfor
+
 bb = vinv * swordscentered';
-v2 = eye(wordsn)\bb';
+v2 = aa\bb';
 v3 = v2 * vinv;
 
 acc = zeros(1,wordsn);
-accs = 0;
+accc = 0;
 for n = 1:wordsn
   c = v2*bb(:,n);
-  acc(n) = c(n);
+  labelsn = labels(n)+1;
+  acc(n) = c(labelsn);
   [wm,im] = max(c);
-  if (n!=im)
-    printf("predicted(%i): '%i', conf: %f\n",n,im,acc(n));
-    accs = accs + 1;
+  if (labelsn!=im)
+    printf("predicted(%i): '%i', actual: %i, conf: %f\n",n,im,labelsn,acc(n));
+  else
+    accc = accc + 1;
   endif
 endfor
-tacc = (wordsn-accs)/wordsn;
-printf("accuracy: %f\n",tacc);
+cacc = accc/wordsn;
+printf("accuracy: %f\n",cacc);
 
 #load imagest.mat;
 #words = data; clear data;
@@ -44,22 +52,22 @@ wordb = words(word,:);
 worda = cast(wordb,"double");
 wordc = v3 * (worda - swordsmean)';
 [ws,is] = sort(wordc);
-wm1 = ws(wordsn);
-wm2 = ws(wordsn-1);
-wm3 = ws(wordsn-2);
-wm4 = ws(wordsn-3);
-wm5 = ws(wordsn-4);
-wm6 = ws(wordsn-5);
-im1 = is(wordsn);
-im2 = is(wordsn-1);
-im3 = is(wordsn-2);
-im4 = is(wordsn-3);
-im5 = is(wordsn-4);
-im6 = is(wordsn-5);
-printf("1. predicted(%i): '%i', c: '%i', a: '%i', conf: %f\n",im1,word,labels(im1),wordl,wm1);
-printf("2. predicted(%i): '%i', c: '%i', a: '%i', conf: %f\n",im2,word,labels(im2),wordl,wm2);
-printf("3. predicted(%i): '%i', c: '%i', a: '%i', conf: %f\n",im3,word,labels(im3),wordl,wm3);
-printf("4. predicted(%i): '%i', c: '%i', a: '%i', conf: %f\n",im4,word,labels(im4),wordl,wm4);
-printf("5. predicted(%i): '%i', c: '%i', a: '%i', conf: %f\n",im5,word,labels(im5),wordl,wm5);
-printf("6. predicted(%i): '%i', c: '%i', a: '%i', conf: %f\n",im6,word,labels(im6),wordl,wm6);
+wm1 = ws(end);
+wm2 = ws(end-1);
+wm3 = ws(end-2);
+wm4 = ws(end-3);
+wm5 = ws(end-4);
+wm6 = ws(end-5);
+im1 = is(end);
+im2 = is(end-1);
+im3 = is(end-2);
+im4 = is(end-3);
+im5 = is(end-4);
+im6 = is(end-5);
+printf("1. predicted(%i): '%i', a: '%i', conf: %f\n",im1,labels(im1),wordl,wm1);
+printf("2. predicted(%i): '%i', a: '%i', conf: %f\n",im2,labels(im2),wordl,wm2);
+printf("3. predicted(%i): '%i', a: '%i', conf: %f\n",im3,labels(im3),wordl,wm3);
+printf("4. predicted(%i): '%i', a: '%i', conf: %f\n",im4,labels(im4),wordl,wm4);
+printf("5. predicted(%i): '%i', a: '%i', conf: %f\n",im5,labels(im5),wordl,wm5);
+printf("6. predicted(%i): '%i', a: '%i', conf: %f\n",im6,labels(im6),wordl,wm6);
 
