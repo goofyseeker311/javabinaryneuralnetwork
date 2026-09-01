@@ -17,11 +17,11 @@ printf("swords (%i,%i).\n",size(swordsfull,1),swordslen);
 vinv = (eye(swordslen)/v')';
 printf("svdinv (%i,%i).\n",size(v,1),size(v,2));
 
-#aa = eye(wordsn);
-aa = zeros(wordsn,10);
-for n = 1:wordsn
-  aa(n,labels(n)+1) = 1;
-endfor
+aa = eye(wordsn);
+#aa = zeros(wordsn,10);
+#for n = 1:wordsn
+#  aa(n,labels(n)+1) = 1;
+#endfor
 
 bb = vinv * swordscentered';
 cc = (v * bb)' + swordsmean;
@@ -32,18 +32,20 @@ acc = zeros(1,wordsn);
 accc = 0;
 for n = 1:wordsn
   c = v2*bb(:,n);
-  labelsn = labels(n)+1;
-  acc(n) = c(labelsn);
+  acc(n) = c(n);
   [wm,im] = max(c);
-  if (labelsn==im)
+  labelsn = labels(n);
+  labelsc = labels(im);
+  if (labelsn==labelsc)
     accc = accc + 1;
   else
-    printf("predicted(%i): '%i', actual: %i, conf: %f\n",n,im,labelsn,acc(n));
+    printf("predicted(%i): '%i', actual: %i, conf: %f\n",n,labelsc,labelsn,acc(n));
   endif
 endfor
 cacc = accc/wordsn;
-printf("accuracy: %f\n",cacc);
+printf("training accuracy: %f\n",cacc);
 
+labels2 = labels;
 load imagest.mat;
 wordsn = size(data,1);
 words = cast(data,"double"); clear data;
@@ -52,20 +54,21 @@ acc = zeros(1,wordsn);
 accc = 0;
 for n = 1:wordsn
   c = v3 * (words(n,:) - swordsmean)';
-  labelsn = labels(n)+1;
-  acc(n) = c(labelsn);
+  acc(n) = c(n);
   [wm,im] = max(c);
-  if (labelsn==im)
+  labelsn = labels(n);
+  labelsc = labels2(im);
+  if (labelsn==labelsc)
     accc = accc + 1;
   else
-    printf("predicted(%i): '%i', actual: %i, conf: %f\n",n,im,labelsn,acc(n));
+    printf("predicted(%i): '%i', actual: %i, conf: %f\n",n,labelsc,labelsn,acc(n));
   endif
 endfor
 cacc = accc/wordsn;
-printf("accuracy: %f\n",cacc);
+printf("testing accuracy: %f\n",cacc);
 
-word = 11;
-wordl = labels(word);
+word = 29;
+wordl = labels(word)+1;
 wordb = words(word,:);
 worda = cast(wordb,"double");
 wordc = v3 * (worda - swordsmean)';
@@ -82,10 +85,10 @@ im3 = is(end-2);
 im4 = is(end-3);
 im5 = is(end-4);
 im6 = is(end-5);
-printf("1. predicted(%i): '%i', a: '%i', conf: %f\n",word,im1,wordl,wm1);
-printf("2. predicted(%i): '%i', a: '%i', conf: %f\n",word,im2,wordl,wm2);
-printf("3. predicted(%i): '%i', a: '%i', conf: %f\n",word,im3,wordl,wm3);
-printf("4. predicted(%i): '%i', a: '%i', conf: %f\n",word,im4,wordl,wm4);
-printf("5. predicted(%i): '%i', a: '%i', conf: %f\n",word,im5,wordl,wm5);
-printf("6. predicted(%i): '%i', a: '%i', conf: %f\n",word,im6,wordl,wm6);
+printf("1. predicted(%i): '%i', a: '%i', conf: %f\n",im1,labels2(im1),labels(wordl),wm1);
+printf("2. predicted(%i): '%i', a: '%i', conf: %f\n",im2,labels2(im2),labels(wordl),wm2);
+printf("3. predicted(%i): '%i', a: '%i', conf: %f\n",im3,labels2(im3),labels(wordl),wm3);
+printf("4. predicted(%i): '%i', a: '%i', conf: %f\n",im4,labels2(im4),labels(wordl),wm4);
+printf("5. predicted(%i): '%i', a: '%i', conf: %f\n",im5,labels2(im5),labels(wordl),wm5);
+printf("6. predicted(%i): '%i', a: '%i', conf: %f\n",im6,labels2(im6),labels(wordl),wm6);
 
