@@ -1,7 +1,6 @@
 close all; clear; output_precision(16);
 
 load images.mat;
-#data = data(1:2000,:);
 
 wordsn = size(data,1);
 words = data; clear data;
@@ -17,11 +16,10 @@ printf("swords (%i,%i).\n",size(swordsfull,1),swordslen);
 vinv = (eye(swordslen)/v')';
 printf("svdinv (%i,%i).\n",size(v,1),size(v,2));
 
-aa = eye(wordsn);
-#aa = zeros(wordsn,10);
-#for n = 1:wordsn
-#  aa(n,labels(n)+1) = 1;
-#endfor
+aa = zeros(wordsn,10);
+for n = 1:wordsn
+  aa(n,labels(n)+1) = 1;
+endfor
 
 bb = vinv * swordscentered';
 cc = (v * bb)' + swordsmean;
@@ -32,10 +30,10 @@ acc = zeros(1,wordsn);
 accc = 0;
 for n = 1:wordsn
   c = v2*bb(:,n);
-  acc(n) = c(n);
-  [wm,im] = max(c);
   labelsn = labels(n);
-  labelsc = labels(im);
+  acc(n) = c(labelsn+1);
+  [wm,im] = max(c);
+  labelsc = im-1;
   if (labelsn==labelsc)
     accc = accc + 1;
   else
@@ -54,20 +52,20 @@ acc = zeros(1,wordsn);
 accc = 0;
 for n = 1:wordsn
   c = v3 * (words(n,:) - swordsmean)';
-  acc(n) = c(n);
-  [wm,im] = max(c);
   labelsn = labels(n);
-  labelsc = labels2(im);
+  acc(n) = c(labelsn+1);
+  [wm,im] = max(c);
+  labelsc = im-1;
   if (labelsn==labelsc)
     accc = accc + 1;
   else
     printf("predicted(%i): '%i', actual: %i, conf: %f\n",n,labelsc,labelsn,acc(n));
   endif
 endfor
-cacc = accc/wordsn;
-printf("testing accuracy: %f\n",cacc);
+cacc2 = accc/wordsn;
+printf("testing accuracy: %f\n",cacc2);
 
-word = 29;
+word = 28;
 wordl = labels(word)+1;
 wordb = words(word,:);
 worda = cast(wordb,"double");
