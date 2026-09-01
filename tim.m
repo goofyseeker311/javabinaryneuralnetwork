@@ -24,6 +24,7 @@ for n = 1:wordsn
 endfor
 
 bb = vinv * swordscentered';
+cc = (v * bb)' + swordsmean;
 v2 = aa\bb';
 v3 = v2 * vinv;
 
@@ -34,19 +35,36 @@ for n = 1:wordsn
   labelsn = labels(n)+1;
   acc(n) = c(labelsn);
   [wm,im] = max(c);
-  if (labelsn!=im)
-    printf("predicted(%i): '%i', actual: %i, conf: %f\n",n,im,labelsn,acc(n));
-  else
+  if (labelsn==im)
     accc = accc + 1;
+  else
+    printf("predicted(%i): '%i', actual: %i, conf: %f\n",n,im,labelsn,acc(n));
   endif
 endfor
 cacc = accc/wordsn;
 printf("accuracy: %f\n",cacc);
 
-#load imagest.mat;
-#words = data; clear data;
+load imagest.mat;
+wordsn = size(data,1);
+words = cast(data,"double"); clear data;
 
-word = 1;
+acc = zeros(1,wordsn);
+accc = 0;
+for n = 1:wordsn
+  c = v3 * (words(n,:) - swordsmean)';
+  labelsn = labels(n)+1;
+  acc(n) = c(labelsn);
+  [wm,im] = max(c);
+  if (labelsn==im)
+    accc = accc + 1;
+  else
+    printf("predicted(%i): '%i', actual: %i, conf: %f\n",n,im,labelsn,acc(n));
+  endif
+endfor
+cacc = accc/wordsn;
+printf("accuracy: %f\n",cacc);
+
+word = 11;
 wordl = labels(word);
 wordb = words(word,:);
 worda = cast(wordb,"double");
@@ -64,10 +82,10 @@ im3 = is(end-2);
 im4 = is(end-3);
 im5 = is(end-4);
 im6 = is(end-5);
-printf("1. predicted(%i): '%i', a: '%i', conf: %f\n",im1,labels(im1),wordl,wm1);
-printf("2. predicted(%i): '%i', a: '%i', conf: %f\n",im2,labels(im2),wordl,wm2);
-printf("3. predicted(%i): '%i', a: '%i', conf: %f\n",im3,labels(im3),wordl,wm3);
-printf("4. predicted(%i): '%i', a: '%i', conf: %f\n",im4,labels(im4),wordl,wm4);
-printf("5. predicted(%i): '%i', a: '%i', conf: %f\n",im5,labels(im5),wordl,wm5);
-printf("6. predicted(%i): '%i', a: '%i', conf: %f\n",im6,labels(im6),wordl,wm6);
+printf("1. predicted(%i): '%i', a: '%i', conf: %f\n",word,im1,wordl,wm1);
+printf("2. predicted(%i): '%i', a: '%i', conf: %f\n",word,im2,wordl,wm2);
+printf("3. predicted(%i): '%i', a: '%i', conf: %f\n",word,im3,wordl,wm3);
+printf("4. predicted(%i): '%i', a: '%i', conf: %f\n",word,im4,wordl,wm4);
+printf("5. predicted(%i): '%i', a: '%i', conf: %f\n",word,im5,wordl,wm5);
+printf("6. predicted(%i): '%i', a: '%i', conf: %f\n",word,im6,wordl,wm6);
 
