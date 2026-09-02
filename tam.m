@@ -2,7 +2,7 @@ close all; clear; output_precision(16);
 
 [img,fs] = audioread("audio.mp3");
 
-tiledim = 16*16;
+tiledim = 128;
 tilex = 2;
 tiley = ceil(size(img,1)/tiledim);
 tilesize = tiledim * tilex;
@@ -14,8 +14,8 @@ for n = 1:tiley
   data(n,:) = reshape(tile,1,tilesize);
 endfor
 
-wordsn = size(data,1);
 words = data;
+wordsn = size(data,1);
 printf("words loaded (%i).\n",wordsn);
 
 swordsfull = cast(words,"double");
@@ -24,13 +24,21 @@ swordsmean = mean(swordsfull,1);
 swordscentered = swordsfull - swordsmean;
 printf("swords (%i,%i).\n",size(swordsfull,1),swordslen);
 
-svdcomps = 67;
-[u, s, v] = svd(swordsfull);
+svdcomps = 60;
+[u, s, v] = svd(swordsfull(1:32000,:));
 vv = v(:,1:svdcomps);
 vinv = (eye(swordslen)/vv')';
 printf("svdinv (%i,%i).\n",size(vv,2),size(vv,1));
 
 bb = vinv * swordscentered';
+sc = 128 / max(abs([min(bb(:)) max(bb(:))]));
+bb = cast(bb * sc, 'int8');
+save -binary audio.mat bb sc;
+
+clear bb sc;
+load audio.mat;
+bb = cast(bb, 'double') / sc;
+
 aa = (vv * bb)' + swordsmean;
 cc = svdcomps / swordslen;
 ad = data - aa;
@@ -39,7 +47,7 @@ dds = std(ad(:));
 
 img2 = zeros(tiley*tiledim,2);
 for n = 1:tiley
-  tile = reshape(data(n,:),tiledim,2);
+  tile = reshape(aa(n,:),tiledim,2);
   img2((n-1)*tiledim+(1:tiledim),:) = tile;
 endfor
 

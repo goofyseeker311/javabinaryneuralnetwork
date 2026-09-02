@@ -34,6 +34,14 @@ vinv = (eye(swordslen)/vv')';
 printf("svdinv (%i,%i).\n",size(vv,2),size(vv,1));
 
 bb = vinv * swordscentered';
+sc = 128 / max(abs([min(bb(:)) max(bb(:))]));
+bb = cast(bb * sc, 'int8');
+save -binary image.mat bb sc;
+
+clear bb sc;
+load image.mat;
+bb = cast(bb, 'double') / sc;
+
 aa = (vv * bb)' + swordsmean;
 cc = svdcomps / swordslen;
 ad = data - aa;
