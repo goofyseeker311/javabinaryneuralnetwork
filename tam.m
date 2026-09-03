@@ -55,3 +55,21 @@ sound(img,fs);
 sound(img2,fs);
 printf("compression ratio: %i/%i=%f, average/std error: %f+%f\n",svdcomps,swordslen,cc,dd,dds);
 
+ssm = 50000:200000;
+ws = 384; ws2 = ws/2;
+spi = img2(ssm,:);
+ss = ceil(size(ssm,2)/ws)-1;
+spc = zeros(ss,ws);
+for n = 1:ss
+  spc(n,:) = fft(spi((n-1)*ws+(1:ws),1),ws);
+endfor
+spg = log10(abs(spc(:,1:ws2)))';
+surf(spg,'facelighting','none','edgecolor','none'); view(2); axis tight;
+colormap(jet); clim([-1 2]);
+xtick = [0.5 1 1.5 2 2.5 3];
+ytick = [0 0.5 1 1.5 2];
+xticks(xtick*(fs/ws));
+xticklabels(xtick);
+yticks(ytick*ws/4);
+yticklabels(ytick*fs/4);
+
