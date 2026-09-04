@@ -33,7 +33,7 @@ printf("svdinv (%i,%i).\n",size(vv,2),size(vv,1));
 bb = vinv * swordscentered';
 sc = 128 / max(abs([min(bb(:)) max(bb(:))]));
 bb = cast(bb * sc, 'int8');
-save -binary audio.mat bb sc;
+save -binary -zip audio.mat bb sc;
 
 clear bb sc;
 load audio.mat;
