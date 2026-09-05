@@ -1,5 +1,7 @@
 close all; clear; output_precision(16);
 
+pkg load signal;
+
 function floatvalue = minitofloat(minivalue)
   longvalue = cast(minivalue,'int64');
   longsign = bitshift(bitand(longvalue,cast(0x80,'int64')),-7);
@@ -100,26 +102,13 @@ vinv = (eye(swordslen)/vv')';
 printf("svdinv (%i,%i).\n",size(vv,2),size(vv,1));
 
 bb = vinv * swordscentered';
-sc = 65536 / max(abs([min(bb(:)) max(bb(:))]));
-bb *= sc;
-bbq = zeros(size(bb),'uint16');
-for n = 1:size(bb,1)
-  for m = 1:size(bb,2)
-    bbq(n,m) = floattohalf(bb(n,m));
-  endfor
-endfor
-bb = bbq;
+sc = 32678 / max(abs([min(bb(:)) max(bb(:))]));
+bb = cast(bb * sc,'int16');
 save -binary -zip audio.mat bb sc;
 
 clear bb sc;
 load audio.mat;
-bbq = zeros(size(bb),'single');
-for n = 1:size(bb,1)
-  for m = 1:size(bb,2)
-    bbq(n,m) = halftofloat(bb(n,m));
-  endfor
-endfor
-bb = cast(bbq,'double') / sc;
+bb = cast(bb,'double') / sc;
 
 aa = (vv * bb)' + swordsmean;
 cc = svdcomps / swordslen;
@@ -133,7 +122,9 @@ for n = 1:tiley
   img2((n-1)*tiledim+(1:tiledim),:) = tile;
 endfor
 
-sound(img,fs);
+blp = remez(2075, [0 0.4984 0.5005 1], [1 1 0 0], [1 40]);
+img2 = filter(blp,1,img2);
+
 sound(img2,fs);
 printf("compression ratio: %i/%i=%f, average/std error: %f+%f\n",svdcomps,swordslen,cc,dd,dds);
 
