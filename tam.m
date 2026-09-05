@@ -102,19 +102,33 @@ vinv = (eye(swordslen)/vv')';
 printf("svdinv (%i,%i).\n",size(vv,2),size(vv,1));
 
 bb = vinv * swordscentered';
-sc = 32678 / max(abs([min(bb(:)) max(bb(:))]));
-bb = cast(bb * sc,'int16');
+sc = 65536 / max(abs([min(bb(:)) max(bb(:))]));
+bb *= sc;
+bbq = zeros(size(bb),'int16');
+for n = 1:size(bb,1)
+  for m = 1:size(bb,2)
+    bbq(n,m) = floattohalf(bb(n,m));
+  endfor
+endfor
+bb = bbq;
 save -binary -zip audio.mat bb sc;
 
 clear bb sc;
 load audio.mat;
-bb = cast(bb,'double') / sc;
+bbq = zeros(size(bb),'single');
+for n = 1:size(bb,1)
+  for m = 1:size(bb,2)
+    bbq(n,m) = halftofloat(bb(n,m));
+  endfor
+endfor
+bb = cast(bbq,'double') / sc;
 
 aa = (vv * bb)' + swordsmean;
 cc = svdcomps / swordslen;
 ad = data - aa;
-dd = mean(abs(ad(:)));
-dds = std(ad(:));
+adf = isfinite(ad(:));
+dd = mean(abs(ad(adf)));
+dds = std(ad(adf));
 
 img2 = zeros(tiley*tiledim,2);
 for n = 1:tiley
