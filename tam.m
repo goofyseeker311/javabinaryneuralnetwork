@@ -102,7 +102,7 @@ vinv = (eye(swordslen)/vv')';
 printf("svdinv (%i,%i).\n",size(vv,2),size(vv,1));
 
 bb = vinv * swordscentered';
-sc = 256 / max(abs([min(bb(:)) max(bb(:))]));
+sc = 240 / max(abs([min(bb(:)) max(bb(:))]));
 bb *= sc;
 bbq = zeros(size(bb),'int8');
 for n = 1:size(bb,1)
@@ -126,9 +126,8 @@ bb = cast(bbq,'double') / sc;
 aa = (vv * bb)' + swordsmean;
 cc = svdcomps / swordslen;
 ad = data - aa;
-adf = isfinite(ad(:));
-dd = mean(abs(ad(adf)));
-dds = std(ad(adf));
+dd = mean(abs(ad(:)));
+dds = std(ad(:));
 
 img2 = zeros(tiley*tiledim,2);
 for n = 1:tiley
