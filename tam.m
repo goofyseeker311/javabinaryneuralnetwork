@@ -102,12 +102,12 @@ vinv = (eye(swordslen)/vv')';
 printf("svdinv (%i,%i).\n",size(vv,2),size(vv,1));
 
 bb = vinv * swordscentered';
-sc = 65536 / max(abs([min(bb(:)) max(bb(:))]));
+sc = 256 / max(abs([min(bb(:)) max(bb(:))]));
 bb *= sc;
-bbq = zeros(size(bb),'int16');
+bbq = zeros(size(bb),'int8');
 for n = 1:size(bb,1)
   for m = 1:size(bb,2)
-    bbq(n,m) = floattohalf(bb(n,m));
+    bbq(n,m) = floattomini(bb(n,m));
   endfor
 endfor
 bb = bbq;
@@ -118,7 +118,7 @@ load audio.mat;
 bbq = zeros(size(bb),'single');
 for n = 1:size(bb,1)
   for m = 1:size(bb,2)
-    bbq(n,m) = halftofloat(bb(n,m));
+    bbq(n,m) = minitofloat(bb(n,m));
   endfor
 endfor
 bb = cast(bbq,'double') / sc;
