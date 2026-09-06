@@ -95,8 +95,9 @@ swordsmean = mean(swordsfull,1);
 swordscentered = swordsfull - swordsmean;
 printf("swords (%i,%i).\n",size(swordsfull,1),swordslen);
 
-svdcomps = 60;
-[u, s, v] = svd(swordsfull(1:32000,:));
+svdcomps = swordslen;
+svdstep = 4;
+[u, s, v] = svd(swordsfull(1:svdstep:end,:));
 vv = v(:,1:svdcomps);
 vinv = (eye(swordslen)/vv')';
 printf("svdinv (%i,%i).\n",size(vv,2),size(vv,1));
