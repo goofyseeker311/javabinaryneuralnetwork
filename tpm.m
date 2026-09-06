@@ -5,8 +5,10 @@ img = imread("image.jpg");
 tiledim = 16;
 tilesize = tiledim^2;
 tilergb = tilesize*3;
-tilex = ceil(size(img,2)/tiledim);
-tiley = ceil(size(img,1)/tiledim);
+imgx = size(img,2);
+imgy = size(img,1);
+tilex = ceil(imgx/tiledim);
+tiley = ceil(imgy/tiledim);
 data = zeros(tilex*tiley,tilergb);
 
 img(tiley*tiledim,tilex*tiledim,:) = [0,0,0];
@@ -36,11 +38,14 @@ printf("svdinv (%i,%i).\n",size(vv,2),size(vv,1));
 bb = vinv * swordscentered';
 sc = 128 / max(abs([min(bb(:)) max(bb(:))]));
 bb = cast(bb * sc,'int8');
-save -binary -zip image.mat bb sc;
+sd = 128 / max(abs([min(vv(:)) max(vv(:))]));
+vv = cast(vv * sd,'int8');
+save -binary -zip image.mat bb sc vv sd swordsmean tilex tiley tiledim imgx imgy;
 
 clear bb sc;
 load image.mat;
 bb = cast(bb,'double') / sc;
+vv = cast(vv,'double') / sd;
 
 aa = (vv * bb)' + swordsmean;
 cc = svdcomps / swordslen;
@@ -56,6 +61,9 @@ for n = 1:tiley
   endfor
 endfor
 img2 = cast(img2, "uint8");
+
+img = img(1:imgy,1:imgx,:);
+img2 = img2(1:imgy,1:imgx,:);
 
 figure(1); image(img);
 figure(2); image(img2);
