@@ -40,7 +40,7 @@ for fc = 1:chunks
 endfor
 
 
-svdcomps = 100;
+svdcomps = swordslen;
 [u, s, v] = svd(chunkdata);
 vv = v(:,1:svdcomps);
 vinv = (eye(swordslen)/vv')';
@@ -64,38 +64,31 @@ for fc = 1:cframes:vframes
   chunkmean = mean(chunkfull,1);
   chunkcentered = chunkfull - chunkmean;
 
-  bb = vinv * chunkcentered(:,:,fn)';
+  bb = vinv * chunkcentered';
   sc = 128 / max(abs([min(bb(:)) max(bb(:))]));
   if (isinf(sc)) sc = 1; endif
   bb = cast(bb * sc,'int8');
 
   savefile = sprintf("output/video%i.mat",fc);
-  save("-binary", "-zip", savefile, "bb", "sc", "chunkmean", "swordslen", "svdcomps", "tilex", "tiley", "tiledim", "imgx", "imgy");
+  save("-binary", "-zip", savefile, "bb", "sc", "chunkmean", "swordslen", "svdcomps", "imgx", "imgy", "tiledim", "tilesize", "tilergb", "tilex", "tiley", "tilesmp");
 endfor
 
-#save -binary -zip video.mat store sc swordsmean swordslen svdcomps tilex tiley tiledim imgx imgy;
 
-##clear bb sc vv sd;
-##load image.mat;
-##bb = cast(bb,'double') / sc;
-##vv = cast(vv,'double') / sd;
-##
-##aa = (vv * bb)' + swordsmean;
-##cc = svdcomps / swordslen;
-##ad = data - aa;
-##dd = mean(abs(ad(:)));
-##dds = std(ad(:));
-##
-##img2 = zeros(tiley*tiledim,tilex*tiledim,3);
-##for n = 1:tiley
-##  for m = 1:tilex
-##    tile = aa((n-1)*tilex+m,:);
-##    img2((n-1)*tiledim+(1:16),(m-1)*tiledim+(1:16),:) = reshape(tile,tiledim,tiledim,3);
-##  endfor
-##endfor
-##img2 = cast(img2, "uint8");
-##
-##img = img(1:imgy,1:imgx,:);
-##img2 = img2(1:imgy,1:imgx,:);
+clear bb sc;
+load "output/video1.mat";
+bb = cast(bb,'double') / sc;
+aa = (vv * bb)' + chunkmean;
 
+img2 = zeros(tiley*tiledim,tilex*tiledim,3);
+k = 1;
+for n = 1:tiley
+  for m = 1:tilex
+    tile = aa((n-1)*tilex+m,(k-1)*tilergb+(1:tilergb));
+    img2((n-1)*tiledim+(1:tiledim),(m-1)*tiledim+(1:tiledim),:) = reshape(tile,tiledim,tiledim,3);
+  endfor
+endfor
+img2 = cast(img2, "uint8");
+
+img2 = img2(1:imgy,1:imgx,:);
+figure(2); image(img2); daspect([1 1]);
 
