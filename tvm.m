@@ -2,77 +2,75 @@ close all; clear; output_precision(16);
 
 pkg load video;
 
-load tpm.mat;
-svdcomps = 100;
-vinv = vinv(1:svdcomps,:);
-swordslen = size(vinv,1);
-vv = (eye(swordslen)/vinv')';
-
 vid = VideoReader("video.mp4");
 vframes = vid.NumberOfFrames;
 imgx = vid.Width;
 imgy = vid.Height;
 
+chunks = 16;
+framestep = vframes / chunks;
+
+cframes = 16;
 tiledim = 16;
 tilesize = tiledim^2;
 tilergb = tilesize*3;
 tilex = ceil(imgx/tiledim);
 tiley = ceil(imgy/tiledim);
 tilesmp = tilex*tiley;
+swordslen = tilergb*cframes;
 
-cframes = 32;
-chunkorigins = 1:cframes;
-chunkscales = ones(1,cframes);
-chunkmeans = zeros(tilergb,cframes);
-chunkdata = ones(svdcomps,tilesmp,cframes,'int8');
+chunkdata = zeros(tilesmp*chunks,swordslen,'int8');
 
-mkdir output;
-words = zeros(tilesmp,tilergb,cframes);
-
-
-for fc = 1:cframes:vframes
-
+for fc = 1:chunks
+  chunkfull = zeros(tilesmp,swordslen);
   for k = 1:cframes
     img = vid.readFrame;
     img(tiley*tiledim,tilex*tiledim,:) = [0,0,0];
     for n = 1:tiley
       for m = 1:tilex
-        tile = img((n-1)*tiledim+(1:16),(m-1)*tiledim+(1:16),:);
-        words((n-1)*tilex+m,:,k) = reshape(tile,1,tilergb);
+        tile = img((n-1)*tiledim+(1:tiledim),(m-1)*tiledim+(1:tiledim),:);
+        chunkfull((n-1)*tilex+m,(k-1)*tilergb+(1:tilergb)) = reshape(tile,1,tilergb);
+      endfor
+    endfor
+  endfor
+  for k = 1:(framestep-1)
+    img = vid.readFrame;
+  endfor
+  chunkdata((fc-1)*tilesmp+(1:tilesmp),:) = chunkfull;
+endfor
+
+
+svdcomps = 100;
+[u, s, v] = svd(chunkdata);
+vv = v(:,1:svdcomps);
+vinv = (eye(swordslen)/vv')';
+
+
+mkdir output;
+
+for fc = 1:cframes:vframes
+  chunkfull = zeros(tilesmp,swordslen);
+  for k = 1:cframes
+    img = vid.readFrame;
+    img(tiley*tiledim,tilex*tiledim,:) = [0,0,0];
+    for n = 1:tiley
+      for m = 1:tilex
+        tile = img((n-1)*tiledim+(1:tiledim),(m-1)*tiledim+(1:tiledim),:);
+        chunkfull((n-1)*tilex+m,(k-1)*tilergb+(1:tilergb)) = reshape(tile,1,tilergb);
       endfor
     endfor
   endfor
 
-  chunkfull = cast(words,"double");
-  chunkmeans = mean(chunkfull,1);
-  chunkcentered = chunkfull - chunkmeans;
+  chunkmean = mean(chunkfull,1);
+  chunkcentered = chunkfull - chunkmean;
 
-  for fn = 1:cframes
-    bb = vinv * chunkcentered(:,:,fn)';
-    sc = 128 / max(abs([min(bb(:)) max(bb(:))]));
-    if (isinf(sc)) sc = 1; endif
-    bb = cast(bb * sc,'int8');
-    bbz = sum(bb(:)==0);
-    corigin = fn;
-    if (fn>1)
-      bb2 = vinv * (chunkcentered(:,:,fn)-chunkcentered(:,:,fn-1))';
-      sc2 = 128 / max(abs([min(bb2(:)) max(bb2(:))]));
-      if (isinf(sc2)) sc2 = 1; endif
-      bb2 = cast(bb2 * sc2,'int8');
-      bbz2 = sum(bb2(:)==0);
-      if (bbz2>bbz)
-        bb = bb2;
-        sc = sc2;
-        corigin = fn - 1;
-      endif
-    endif
-    chunkorigins(1,fn) = corigin;
-    chunkscales(1,fn) = sc;
-    chunkdata(:,:,fn) = bb;
-  endfor
+  bb = vinv * chunkcentered(:,:,fn)';
+  sc = 128 / max(abs([min(bb(:)) max(bb(:))]));
+  if (isinf(sc)) sc = 1; endif
+  bb = cast(bb * sc,'int8');
 
   savefile = sprintf("output/video%i.mat",fc);
-  save("-binary", "-zip", savefile, "chunkdata", "chunkorigins", "chunkscales", "chunkmeans", "swordslen", "svdcomps", "tilex", "tiley", "tiledim", "imgx", "imgy");
+  save("-binary", "-zip", savefile, "bb", "sc", "chunkmean", "swordslen", "svdcomps", "tilex", "tiley", "tiledim", "imgx", "imgy");
 endfor
 
 #save -binary -zip video.mat store sc swordsmean swordslen svdcomps tilex tiley tiledim imgx imgy;
