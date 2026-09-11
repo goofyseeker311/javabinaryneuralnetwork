@@ -7,11 +7,10 @@ vframes = vid.NumberOfFrames;
 imgx = vid.Width;
 imgy = vid.Height;
 
-chunks = 16;
-framestep = vframes / chunks;
+cframes = 8;
+chunks = ceil(vframes/cframes);
 
-cframes = 16;
-tiledim = 16;
+tiledim = 8;
 tilesize = tiledim^2;
 tilergb = tilesize*3;
 tilex = ceil(imgx/tiledim);
@@ -19,12 +18,15 @@ tiley = ceil(imgy/tiledim);
 tilesmp = tilex*tiley;
 swordslen = tilergb*cframes;
 
-chunkdata = zeros(tilesmp*chunks,swordslen,'int8');
+chunkdata = zeros(tilesmp*chunks,swordslen,'uint8');
 
 for fc = 1:chunks
   chunkfull = zeros(tilesmp,swordslen);
   for k = 1:cframes
-    img = vid.readFrame;
+    img = zeros(imgy,imgx,3,'uint8');
+    if (vid.hasFrame)
+      img = vid.readFrame;
+    endif
     img(tiley*tiledim,tilex*tiledim,:) = [0,0,0];
     for n = 1:tiley
       for m = 1:tilex
@@ -33,15 +35,12 @@ for fc = 1:chunks
       endfor
     endfor
   endfor
-  for k = 1:(framestep-1)
-    img = vid.readFrame;
-  endfor
   chunkdata((fc-1)*tilesmp+(1:tilesmp),:) = chunkfull;
 endfor
 
 
 svdcomps = swordslen;
-[u, s, v] = svd(chunkdata);
+[u, s, v] = svd(chunkdata,'econ');
 vv = v(:,1:svdcomps);
 vinv = (eye(swordslen)/vv')';
 
@@ -51,7 +50,10 @@ mkdir output;
 for fc = 1:cframes:vframes
   chunkfull = zeros(tilesmp,swordslen);
   for k = 1:cframes
-    img = vid.readFrame;
+    img = zeros(imgy,imgx,3,'uint8');
+    if (vid.hasFrame)
+      img = vid.readFrame;
+    endif
     img(tiley*tiledim,tilex*tiledim,:) = [0,0,0];
     for n = 1:tiley
       for m = 1:tilex
