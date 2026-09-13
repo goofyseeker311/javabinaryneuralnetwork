@@ -1,8 +1,9 @@
 close all; clear; output_precision(16);
 
-pkg load video;
+pkg load video image;
 
-vid = VideoReader("video.mp4");
+filename = "video.mp4";
+vid = VideoReader(filename);
 vframes = vid.NumberOfFrames;
 imgx = vid.Width;
 imgy = vid.Height;
@@ -46,6 +47,7 @@ vinv = (eye(swordslen)/vv')';
 
 
 mkdir output;
+vid = VideoReader(filename);
 
 for fc = 1:cframes:vframes
   chunkfull = zeros(tilesmp,swordslen);
@@ -81,8 +83,8 @@ load "output/video1.mat";
 bb = cast(bb,'double') / sc;
 aa = (vv * bb)' + chunkmean;
 
-img2 = zeros(tiley*tiledim,tilex*tiledim,3);
 k = 1;
+img2 = zeros(tiley*tiledim,tilex*tiledim,3);
 for n = 1:tiley
   for m = 1:tilex
     tile = aa((n-1)*tilex+m,(k-1)*tilergb+(1:tilergb));
@@ -92,5 +94,7 @@ endfor
 img2 = cast(img2, "uint8");
 
 img2 = img2(1:imgy,1:imgx,:);
+img2 = imsmooth(img2);
+img2 = imfilter(img2,fspecial("motion"));
 figure(2); image(img2); daspect([1 1]);
 
