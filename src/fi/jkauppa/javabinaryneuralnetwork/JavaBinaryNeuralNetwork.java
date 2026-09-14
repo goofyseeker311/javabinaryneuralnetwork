@@ -16,11 +16,10 @@ import java.util.zip.ZipOutputStream;
 import javax.imageio.ImageIO;
 
 public class JavaBinaryNeuralNetwork {
-	private int svddim = 768;
 	private int tiledim = 16;
 	private int tilesize = tiledim*tiledim;
 	private int tilergb = tilesize*3;
-	private float[][] tpmencode = new float[svddim][svddim];
+	private float[][] tpmencode = new float[tilergb][tilergb];
 	
 	public JavaBinaryNeuralNetwork() {
 		loadMatrix(tpmencode, "res/tpm/tpm.bin");
@@ -35,8 +34,8 @@ public class JavaBinaryNeuralNetwork {
 				BufferedImage img = ImageIO.read(inputfile);
 				int imgwidth = img.getWidth();
 				int imgheight = img.getHeight();
-				int tilex = (int)Math.ceil(imgwidth/tiledim);
-				int tiley = (int)Math.ceil(imgheight/tiledim);
+				int tilex = (int)Math.ceil((float)imgwidth/(float)tiledim);
+				int tiley = (int)Math.ceil((float)imgheight/(float)tiledim);
 				int tilesmp = tilex*tiley;
 				float[][] img2 = new float[tilergb][tilesmp];
 				for (int y=0;y<tiley;y++) {
@@ -45,26 +44,36 @@ public class JavaBinaryNeuralNetwork {
 							for (int i=0;i<tiledim;i++) {
 								int pixely = y*tiledim+j;
 								int pixelx = x*tiledim+i;
-								int pixelcolor = img.getRGB(pixelx, pixely);
-								int svdy = (i*tiledim+j)*3;
+								int pixelcolor = 0;
+								if ((pixelx<imgwidth)&&(pixely<imgheight)) {
+									pixelcolor = img.getRGB(pixelx, pixely);
+								}
+								int svdy = i*tiledim+j;
 								int svdx = y*tilex+x;
-								img2[svdy+0][svdx] = (byte)(pixelcolor&0xff);
-								img2[svdy+1][svdx] = (byte)((pixelcolor>>8)&0xff);
-								img2[svdy+2][svdx] = (byte)((pixelcolor>>16)&0xff);
+								img2[tilesize*0+svdy][svdx] = (pixelcolor>>16) & 0xff;
+								img2[tilesize*1+svdy][svdx] = (pixelcolor>>8) & 0xff;
+								img2[tilesize*2+svdy][svdx] = pixelcolor & 0xff;
 							}
 						}
 					}
 				}
+				float[] imgmean = new float[components];
+				matrixmean(imgmean, img2, components);
+				float[][] imgcentered = new float[components][tilesmp];
+				matrixsubtract(imgcentered, img2, imgmean, components);
 				float[][] imgbb = new float[components][tilesmp];
-				matrixmultiply(imgbb, tpmencode, img2, components, tilesmp);
+				matrixmultiply(imgbb, tpmencode, imgcentered, components);
 				ZipOutputStream zipoutput = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(outputfile)));
 				ZipEntry zipimage = new ZipEntry(filenameout);
 				zipoutput.putNextEntry(zipimage);
-				byte[] bfloats = new byte[tilesmp*4];
-				ByteBuffer bbuffer = ByteBuffer.wrap(bfloats);
-				for (int i=0;i<components;i++) {
-					bbuffer.asFloatBuffer().put(imgbb[i]).rewind();
-					zipoutput.write(bfloats);
+				byte[] bbytes = new byte[4];
+				ByteBuffer bfloat = ByteBuffer.wrap(bbytes);
+				FloatBuffer cfloat = bfloat.asFloatBuffer();
+				for (int i=0;i<tilesmp;i++) {
+					for (int j=0;j<components;j++) {
+						cfloat.put(0, imgbb[j][i]);
+						zipoutput.write(bbytes);
+					}
 				}
 				zipoutput.closeEntry();
 				zipoutput.close();
@@ -91,10 +100,28 @@ public class JavaBinaryNeuralNetwork {
 		jbnn.encode(filein, fileout, compress, components);
 		System.out.println("exit.");
 	}
-	
-	public static void matrixmultiply(float[][] c, float[][] a, float[][] b, int y, int x) {
+
+	public static void matrixsubtract(float[][] c, float[][] a, float[] b, int y) {
 		for (int j=0;j<y;j++) {
-			for (int i=0;i<x;i++) {
+			for (int i=0;i<a[0].length;i++) {
+				c[j][i] = a[j][i] - b[j];
+			}
+		}
+	}
+	
+	public static void matrixmean(float[] c, float[][] a, int y) {
+		for (int j=0;j<y;j++) {
+			float m = 0;
+			for (int i=0;i<a[0].length;i++) {
+				m += a[j][i];
+			}
+			c[j] = m / a[0].length;
+		}
+	}
+	
+	public static void matrixmultiply(float[][] c, float[][] a, float[][] b, int y) {
+		for (int j=0;j<y;j++) {
+			for (int i=0;i<b[0].length;i++) {
 				float m = 0;
 				for (int n=0;(n<a[0].length)&&(n<b.length);n++) {
 					m += a[j][n] * b[n][i];

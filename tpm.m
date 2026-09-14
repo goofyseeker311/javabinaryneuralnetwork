@@ -45,10 +45,10 @@ vv = v(:,1:svdcomps);
 vinv = (eye(swordslen)/vv')';
 vinvfn = "tpm.bin";
 fopen(vinvfn,'w');
-fwrite(vinvfn,cast(vinv,'single')','single');
+fwrite(vinvfn,cast(vinv,'single')','single',0,'b');
 fclose(vinvfn);
 fopen(vinvfn);
-vinvb = cast(fread(vinvfn,[swordslen Inf],'single'),'single')';
+vinvb = cast(fread(vinvfn,[swordslen Inf],'single',0,'b'),'single');
 fclose(vinvfn);
 printf("svdinv (%i,%i).\n",size(vv,2),size(vv,1));
 
@@ -56,17 +56,11 @@ bb = vinv * swordscentered';
 sc = 128 / max(abs([min(bb(:)) max(bb(:))]));
 if (isinf(sc)) sc = 1; endif
 bb = cast(fptoint8(bb * sc),'int8');
-#sd = 128 / max(abs([min(vv(:)) max(vv(:))]));
-#if (isinf(sd)) sd = 1; endif
-#vv = cast(fptoint8(vv * sd),'int8');
-#save -binary -zip image.mat bb sc vv sd swordsmean swordslen svdcomps tilex tiley tiledim imgx imgy;
 save -binary -zip image.mat bb sc swordsmean swordslen svdcomps tilex tiley tiledim imgx imgy;
 
 clear bb sc;
-#clear vv sd;
 load image.mat;
 bb = int8tofp(cast(bb,'double')) / sc;
-#vv = int8tofp(cast(vv,'double')) / sd;
 
 aa = (vv * bb)' + swordsmean;
 cc = svdcomps / swordslen;
