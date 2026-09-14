@@ -43,6 +43,13 @@ svdcomps = swordslen;
 [u, s, v] = svd(swordsfull,'econ');
 vv = v(:,1:svdcomps);
 vinv = (eye(swordslen)/vv')';
+vinvfn = "tpm.bin";
+fopen(vinvfn,'w');
+fwrite(vinvfn,cast(vinv,'single')','single');
+fclose(vinvfn);
+fopen(vinvfn);
+vinvb = cast(fread(vinvfn,[swordslen Inf],'single'),'single')';
+fclose(vinvfn);
 printf("svdinv (%i,%i).\n",size(vv,2),size(vv,1));
 
 bb = vinv * swordscentered';
