@@ -63,6 +63,9 @@ for n = 1:tiley
   img2((n-1)*tiledim+(1:tiledim),:) = tile;
 endfor
 
+blp = remez(2075, [0 0.4984 0.5005 1], [1 1 0 0], [1 40]);
+img2 = filter(blp,1,img2);
+
 sound(img2,fs);
 printf("compression ratio: %i/%i=%f, average/std error: %f+%f\n",svdcomps,swordslen,cc,dd,dds);
 
