@@ -17,97 +17,108 @@ import java.util.zip.ZipOutputStream;
 import javax.imageio.ImageIO;
 
 public class TpmImage {
-	private static final int tiledim = 16;
-	private static final int tilesize = tiledim*tiledim;
-	private static final int tilergb = tilesize*3;
-	private static final float[][] tpmencode = new float[tilergb][tilergb];
+	private static final int tpmtiledim = 16;
+	private static final int tpmtilesize = tpmtiledim*tpmtiledim;
+	private static final int tpmtilergb = tpmtilesize*3;
+	private static final float[][] tpmencode = new float[tpmtilergb][tpmtilergb];
 	static { loadMatrix(tpmencode, "res/tpm/tpm.bin"); }
 
-	private float[][] image = null;
-	private float[] mean = null;
-	private float scale = 1;
-	private int[] props = {0,0,0,0,0,0,0,0,0};
+	private byte[] tpmdata = null;
+	private float[] tpmmean = null;
+	private float tpmscale = 1;
+	private int tpmcomps = 0;
+	private int tpmwidth = 0;
+	private int tpmheight = 0;
+	private int tpmtilex = 0;
+	private int tpmtiley = 0;
+	private int tpmtilesmp = 0;
 	
 	public TpmImage() {}
 	
-	public void compressImage(BufferedImage img, String filenameout, int components) {
-		File outputfile = new File(filenameout);
-		try {
-			int imgwidth = img.getWidth();
-			int imgheight = img.getHeight();
-			int tilex = (int)Math.ceil((float)imgwidth/(float)tiledim);
-			int tiley = (int)Math.ceil((float)imgheight/(float)tiledim);
-			int tilesmp = tilex*tiley;
-			float[][] img2 = new float[tilergb][tilesmp];
-			for (int y=0;y<tiley;y++) {
-				for (int x=0;x<tilex;x++) {
-					for (int j=0;j<tiledim;j++) {
-						for (int i=0;i<tiledim;i++) {
-							int pixely = y*tiledim+j;
-							int pixelx = x*tiledim+i;
-							int pixelcolor = 0;
-							if ((pixelx<imgwidth)&&(pixely<imgheight)) {
-								pixelcolor = img.getRGB(pixelx, pixely);
-							}
-							int svdy = i*tiledim+j;
-							int svdx = y*tilex+x;
-							img2[tilesize*0+svdy][svdx] = (pixelcolor>>16) & 0xff;
-							img2[tilesize*1+svdy][svdx] = (pixelcolor>>8) & 0xff;
-							img2[tilesize*2+svdy][svdx] = pixelcolor & 0xff;
+	public void compressImage(BufferedImage img, int components) {
+		tpmcomps = components;
+		tpmwidth = img.getWidth();
+		tpmheight = img.getHeight();
+		tpmtilex = (int)Math.ceil((float)tpmwidth/(float)tpmtiledim);
+		tpmtiley = (int)Math.ceil((float)tpmheight/(float)tpmtiledim);
+		tpmtilesmp = tpmtilex*tpmtiley;
+		float[][] img2 = new float[tpmtilergb][tpmtilesmp];
+		for (int y=0;y<tpmtiley;y++) {
+			for (int x=0;x<tpmtilex;x++) {
+				for (int j=0;j<tpmtiledim;j++) {
+					for (int i=0;i<tpmtiledim;i++) {
+						int pixely = y*tpmtiledim+j;
+						int pixelx = x*tpmtiledim+i;
+						int pixelcolor = 0;
+						if ((pixelx<tpmwidth)&&(pixely<tpmheight)) {
+							pixelcolor = img.getRGB(pixelx, pixely);
 						}
+						int svdy = i*tpmtiledim+j;
+						int svdx = y*tpmtilex+x;
+						img2[tpmtilesize*0+svdy][svdx] = (pixelcolor>>16) & 0xff;
+						img2[tpmtilesize*1+svdy][svdx] = (pixelcolor>>8) & 0xff;
+						img2[tpmtilesize*2+svdy][svdx] = pixelcolor & 0xff;
 					}
 				}
 			}
-			float[] imgmean = new float[tilergb];
-			matrixmean(imgmean, img2, tilergb);
-			float[][] imgcentered = new float[tilergb][tilesmp];
-			matrixsubtract(imgcentered, img2, imgmean, tilergb);
-			float[][] imgbb = new float[components][tilesmp];
-			matrixmultiply(imgbb, tpmencode, imgcentered, components);
-			float imgsc = 128 / Math.max(Math.abs(matrixmax(imgbb, components)),Math.abs(matrixmin(imgbb, components)));
-			float[][] imgbbs = new float[components][tilesmp];
-			matrixscale(imgbbs, imgbb, imgsc, components);
-			
+		}
+		tpmmean = new float[tpmtilergb];
+		matrixmean(tpmmean, img2, tpmtilergb);
+		float[][] imgcentered = new float[tpmtilergb][tpmtilesmp];
+		matrixsubtract(imgcentered, img2, tpmmean, tpmtilergb);
+		float[][] imgbb = new float[tpmcomps][tpmtilesmp];
+		matrixmultiply(imgbb, tpmencode, imgcentered, tpmcomps);
+		tpmscale = 128 / Math.max(Math.abs(matrixmax(imgbb, tpmcomps)),Math.abs(matrixmin(imgbb, tpmcomps)));
+		float[][] imgbbs = new float[tpmcomps][tpmtilesmp];
+		matrixscale(imgbbs, imgbb, tpmscale, tpmcomps);
+		
+		tpmdata = new byte[tpmcomps*tpmtilesmp];
+		for (int i=0;i<tpmtilesmp;i++) {
+			for (int j=0;j<tpmcomps;j++) {
+				float fpval = imgbbs[j][i];
+				float intval = (float)(Math.log(Math.abs(fpval))*13.19035d+64.0d);
+				if (intval<0.0f) { intval = 0; }
+				intval = Math.copySign(intval,fpval);
+				tpmdata[i*tpmcomps+j] = (byte)intval;
+			}
+		}
+	}
+	public void writeImage(String filenameout) {
+		File outputfile = new File(filenameout);
+		try {
+			ZipOutputStream zipoutput = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(outputfile)));
+			zipoutput.setLevel(Deflater.BEST_COMPRESSION);
+
 			byte[] bbytes = new byte[4];
 			ByteBuffer bfloat = ByteBuffer.wrap(bbytes);
 			FloatBuffer cfloat = bfloat.asFloatBuffer();
 			IntBuffer ifloat = bfloat.asIntBuffer();
 			
-			ZipOutputStream zipoutput = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(outputfile)));
-			zipoutput.setLevel(Deflater.BEST_COMPRESSION);
 			ZipEntry zipimagetpm = new ZipEntry("image.tpm");
 			zipoutput.putNextEntry(zipimagetpm);
-			for (int i=0;i<tilesmp;i++) {
-				for (int j=0;j<components;j++) {
-					float fpval = imgbbs[j][i];
-					float intval = (float)(Math.log(Math.abs(fpval))*13.19035d+64.0d);
-					if (intval<0.0f) { intval = 0; }
-					intval = Math.copySign(intval,fpval);
-					zipoutput.write((byte)intval);
-				}
-			}
+			zipoutput.write(tpmdata);
 			zipoutput.closeEntry();
 
 			ZipEntry zipmeantpm = new ZipEntry("mean.tpm");
 			zipoutput.putNextEntry(zipmeantpm);
-			for (int j=0;j<tilergb;j++) {
-				cfloat.put(0, imgmean[j]);
+			for (int j=0;j<tpmtilergb;j++) {
+				cfloat.put(0, tpmmean[j]);
 				zipoutput.write(bbytes);
 			}
 			zipoutput.closeEntry();
 			
 			ZipEntry zipproptpm = new ZipEntry("prop.tpm");
 			zipoutput.putNextEntry(zipproptpm);
-			cfloat.put(0, imgsc); zipoutput.write(bbytes);
-			ifloat.put(0, components); zipoutput.write(bbytes);
-			ifloat.put(0, imgwidth); zipoutput.write(bbytes);
-			ifloat.put(0, imgheight); zipoutput.write(bbytes);
-			ifloat.put(0, tiledim); zipoutput.write(bbytes);
-			ifloat.put(0, tilesize); zipoutput.write(bbytes);
-			ifloat.put(0, tilergb); zipoutput.write(bbytes);
-			ifloat.put(0, tilex); zipoutput.write(bbytes);
-			ifloat.put(0, tiley); zipoutput.write(bbytes);
-			ifloat.put(0, tilesmp); zipoutput.write(bbytes);
+			cfloat.put(0, tpmscale); zipoutput.write(bbytes);
+			ifloat.put(0, tpmcomps); zipoutput.write(bbytes);
+			ifloat.put(0, tpmwidth); zipoutput.write(bbytes);
+			ifloat.put(0, tpmheight); zipoutput.write(bbytes);
+			ifloat.put(0, tpmtiledim); zipoutput.write(bbytes);
+			ifloat.put(0, tpmtilesize); zipoutput.write(bbytes);
+			ifloat.put(0, tpmtilergb); zipoutput.write(bbytes);
+			ifloat.put(0, tpmtilex); zipoutput.write(bbytes);
+			ifloat.put(0, tpmtiley); zipoutput.write(bbytes);
+			ifloat.put(0, tpmtilesmp); zipoutput.write(bbytes);
 			zipoutput.closeEntry();
 			
 			zipoutput.close();
@@ -115,6 +126,8 @@ public class TpmImage {
 	}
 	public BufferedImage extractImage(String filenamein, int components) {
 		return null;
+	}
+	public void readImage(String filenamein) {
 	}
 
 	public static void main(String[] args) {
@@ -126,13 +139,14 @@ public class TpmImage {
 		String filein = args[0];
 		String fileout = args[1];
 		boolean compress = true;
-		int components = tilergb;
+		int components = tpmtilergb;
 		if (args.length>=3) { compress = args[2].equals("1"); }
 		if (args.length>=4) { components = Integer.parseInt(args[3]);}
 		TpmImage tpmimage = new TpmImage();
 		if (compress) {
 			BufferedImage img = loadImage(filein);
-			tpmimage.compressImage(img, fileout, components);
+			tpmimage.compressImage(img, components);
+			tpmimage.writeImage(fileout);
 		} else {
 			
 		}
