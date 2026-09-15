@@ -16,15 +16,19 @@ import java.util.zip.ZipOutputStream;
 
 import javax.imageio.ImageIO;
 
-public class JavaBinaryNeuralNetwork {
+public class TpmImage {
 	private static final int tiledim = 16;
 	private static final int tilesize = tiledim*tiledim;
 	private static final int tilergb = tilesize*3;
-	private float[][] tpmencode = new float[tilergb][tilergb];
+	private static final float[][] tpmencode = new float[tilergb][tilergb];
+	static { loadMatrix(tpmencode, "res/tpm/tpm.bin"); }
+
+	private float[][] image = null;
+	private float[] mean = null;
+	private float scale = 1;
+	private int[] props = {0,0,0,0,0,0,0,0,0};
 	
-	public JavaBinaryNeuralNetwork() {
-		loadMatrix(tpmencode, "res/tpm/tpm.bin");
-	}
+	public TpmImage() {}
 	
 	public void compressImage(BufferedImage img, String filenameout, int components) {
 		File outputfile = new File(filenameout);
@@ -125,10 +129,10 @@ public class JavaBinaryNeuralNetwork {
 		int components = tilergb;
 		if (args.length>=3) { compress = args[2].equals("1"); }
 		if (args.length>=4) { components = Integer.parseInt(args[3]);}
-		JavaBinaryNeuralNetwork jbnn = new JavaBinaryNeuralNetwork();
+		TpmImage tpmimage = new TpmImage();
 		if (compress) {
 			BufferedImage img = loadImage(filein);
-			jbnn.compressImage(img, fileout, components);
+			tpmimage.compressImage(img, fileout, components);
 		} else {
 			
 		}
