@@ -12,6 +12,7 @@ import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.util.zip.Deflater;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
 import javax.imageio.ImageIO;
@@ -21,7 +22,11 @@ public class TpmImage {
 	private static final int tpmtilesize = tpmtiledim*tpmtiledim;
 	private static final int tpmtilergb = tpmtilesize*3;
 	private static final float[][] tpmencode = new float[tpmtilergb][tpmtilergb];
-	static { loadMatrix(tpmencode, "res/tpm/tpm.bin"); }
+	private static final float[][] tpmdecode = new float[tpmtilergb][tpmtilergb];
+	static {
+		loadMatrix(tpmencode, "res/tpm/tpm.bin");
+		matrixtranspose(tpmdecode, tpmencode);
+	}
 
 	private byte[] tpmdata = null;
 	private float[] tpmmean = null;
@@ -67,7 +72,7 @@ public class TpmImage {
 		float[][] imgcentered = new float[tpmtilergb][tpmtilesmp];
 		matrixsubtract(imgcentered, img2, tpmmean, tpmtilergb);
 		float[][] imgbb = new float[tpmcomps][tpmtilesmp];
-		matrixmultiply(imgbb, tpmencode, imgcentered, tpmcomps);
+		matrixmultiply(imgbb, tpmencode, imgcentered, tpmtilesmp, tpmcomps);
 		tpmscale = 128 / Math.max(Math.abs(matrixmax(imgbb, tpmcomps)),Math.abs(matrixmin(imgbb, tpmcomps)));
 		float[][] imgbbs = new float[tpmcomps][tpmtilesmp];
 		matrixscale(imgbbs, imgbb, tpmscale, tpmcomps);
@@ -124,16 +129,92 @@ public class TpmImage {
 			zipoutput.close();
 		} catch (Exception e) {e.printStackTrace();}
 	}
-	public BufferedImage extractImage(String filenamein, int components) {
-		return null;
-	}
 	public void readImage(String filenamein) {
+		File inputfile = new File(filenamein);
+		try {
+			ZipFile zipfile = new ZipFile(inputfile);
+			
+			ZipEntry zipimagetpm = zipfile.getEntry("image.tpm");
+			BufferedInputStream zipimageinput = new BufferedInputStream(zipfile.getInputStream(zipimagetpm));
+			tpmdata = new byte[zipimageinput.available()];
+			DataInputStream zipimagestream = new DataInputStream(zipimageinput);
+			zipimagestream.readFully(tpmdata);
+
+			ZipEntry zipmeantpm = zipfile.getEntry("mean.tpm");
+			BufferedInputStream zipmeaninput = new BufferedInputStream(zipfile.getInputStream(zipmeantpm));
+			byte[] meanbytes = new byte[zipmeaninput.available()];
+			DataInputStream zipmeanstream = new DataInputStream(zipmeaninput);
+			zipmeanstream.readFully(meanbytes);
+			ByteBuffer meanbytebuffer = ByteBuffer.wrap(meanbytes);
+			FloatBuffer meanfloatbuffer = meanbytebuffer.asFloatBuffer();
+			tpmmean = new float[meanfloatbuffer.remaining()];
+			meanfloatbuffer.get(tpmmean);
+
+			ZipEntry zipproptpm = zipfile.getEntry("prop.tpm");
+			BufferedInputStream zippropinput = new BufferedInputStream(zipfile.getInputStream(zipproptpm));
+			byte[] propbytes = new byte[zippropinput.available()];
+			DataInputStream zippropstream = new DataInputStream(zippropinput);
+			zippropstream.readFully(propbytes);
+			ByteBuffer propbytebuffer = ByteBuffer.wrap(propbytes);
+			FloatBuffer propfloatbuffer = propbytebuffer.asFloatBuffer();
+			IntBuffer propintbuffer = propbytebuffer.asIntBuffer();
+			tpmscale = propfloatbuffer.get();
+			propintbuffer.position(1);
+			tpmcomps = propintbuffer.get();
+			tpmwidth = propintbuffer.get();
+			tpmheight = propintbuffer.get();
+			propintbuffer.position(7);
+			tpmtilex = propintbuffer.get();
+			tpmtiley = propintbuffer.get();
+			tpmtilesmp = propintbuffer.get();
+			
+			zipfile.close();
+		} catch (Exception e) {e.printStackTrace();}
+	}
+	public BufferedImage extractImage() {
+		float[][] imgbb = new float[tpmcomps][tpmtilesmp];
+		for (int i=0;i<tpmtilesmp;i++) {
+			for (int j=0;j<tpmcomps;j++) {
+				float intval = tpmdata[i*tpmcomps+j];
+				imgbb[j][i] = (float)((1.0f/tpmscale)*Math.copySign(Math.exp((Math.abs(intval)-64.0d)/13.19035d),intval));
+			}
+		}
+		float[][] imgcentered = new float[tpmtilergb][tpmtilesmp];
+		matrixmultiply(imgcentered, tpmdecode, imgbb, tpmtilesmp, tpmtilergb);
+		float[][] img2 = new float[tpmtilergb][tpmtilesmp];
+		matrixaddition(img2, imgcentered, tpmmean, tpmtilergb);
+
+		BufferedImage img = new BufferedImage(tpmwidth, tpmheight, BufferedImage.TYPE_3BYTE_BGR);
+		for (int y=0;y<tpmtiley;y++) {
+			for (int x=0;x<tpmtilex;x++) {
+				for (int j=0;j<tpmtiledim;j++) {
+					for (int i=0;i<tpmtiledim;i++) {
+						int pixely = y*tpmtiledim+j;
+						int pixelx = x*tpmtiledim+i;
+						int svdy = i*tpmtiledim+j;
+						int svdx = y*tpmtilex+x;
+						int pixelred = (int)(img2[tpmtilesize*0+svdy][svdx]);
+						int pixelgreen = (int)(img2[tpmtilesize*1+svdy][svdx]);
+						int pixelblue = (int)img2[tpmtilesize*2+svdy][svdx];
+						pixelred = (pixelred>255)?255:((pixelred<0)?0:pixelred);
+						pixelgreen = (pixelgreen>255)?255:((pixelgreen<0)?0:pixelgreen);
+						pixelblue = (pixelblue>255)?255:((pixelblue<0)?0:pixelblue);
+						int pixelcolor = (pixelred<<16) | (pixelgreen<<8) | pixelblue;
+						if ((pixelx<tpmwidth)&&(pixely<tpmheight)) {
+							img.setRGB(pixelx, pixely, pixelcolor);
+						}
+					}
+				}
+			}
+		}
+		
+		return img;
 	}
 
 	public static void main(String[] args) {
 		System.out.println("init.");
 		if (args.length<2) {
-			System.out.println("arguments expected: filein.jpg fileout.tpm [compress=1]");
+			System.out.println("arguments expected: filein.jpg fileout.tpm [compress=1] [components=768]");
 			return;
 		}
 		String filein = args[0];
@@ -148,7 +229,9 @@ public class TpmImage {
 			tpmimage.compressImage(img, components);
 			tpmimage.writeImage(fileout);
 		} else {
-			
+			tpmimage.readImage(filein);
+			BufferedImage img = tpmimage.extractImage();
+			saveImage(fileout, img);
 		}
 		System.out.println("exit.");
 	}
@@ -192,6 +275,13 @@ public class TpmImage {
 			}
 		}
 	}
+	public static void matrixaddition(float[][] c, float[][] a, float[] b, int y) {
+		for (int j=0;j<y;j++) {
+			for (int i=0;i<a[0].length;i++) {
+				c[j][i] = a[j][i] + b[j];
+			}
+		}
+	}
 	public static void matrixsubtract(float[][] c, float[][] a, float[] b, int y) {
 		for (int j=0;j<y;j++) {
 			for (int i=0;i<a[0].length;i++) {
@@ -199,11 +289,18 @@ public class TpmImage {
 			}
 		}
 	}
-	public static void matrixmultiply(float[][] c, float[][] a, float[][] b, int y) {
+	public static void matrixtranspose(float[][] c, float[][] a) {
+		for (int j=0;j<a.length;j++) {
+			for (int i=0;i<a[0].length;i++) {
+				c[j][i] = a[i][j];
+			}
+		}
+	}
+	public static void matrixmultiply(float[][] c, float[][] a, float[][] b, int x, int y) {
 		for (int j=0;j<y;j++) {
 			for (int i=0;i<b[0].length;i++) {
 				float m = 0;
-				for (int n=0;(n<a[0].length)&&(n<b.length);n++) {
+				for (int n=0;(n<x)&&(n<a[0].length)&&(n<b.length);n++) {
 					m += a[j][n] * b[n][i];
 				}
 				c[j][i] = m;
@@ -211,6 +308,12 @@ public class TpmImage {
 		}
 	}
 
+	public static void saveImage(String filenameout, BufferedImage img) {
+		File outputfile = new File(filenameout);
+		try {
+			ImageIO.write(img, "JPEG", outputfile);
+		} catch (Exception e) {e.printStackTrace();}
+	}
 	public static BufferedImage loadImage(String filenamein) {
 		BufferedImage img = null;
 		File inputfile = new File(filenamein);
