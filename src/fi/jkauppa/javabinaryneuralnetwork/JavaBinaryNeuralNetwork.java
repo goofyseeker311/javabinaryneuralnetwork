@@ -7,9 +7,10 @@ import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
+import java.nio.IntBuffer;
+import java.util.zip.Deflater;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -57,27 +58,60 @@ public class JavaBinaryNeuralNetwork {
 						}
 					}
 				}
-				float[] imgmean = new float[components];
-				matrixmean(imgmean, img2, components);
-				float[][] imgcentered = new float[components][tilesmp];
-				matrixsubtract(imgcentered, img2, imgmean, components);
+				float[] imgmean = new float[tilergb];
+				matrixmean(imgmean, img2, tilergb);
+				float[][] imgcentered = new float[tilergb][tilesmp];
+				matrixsubtract(imgcentered, img2, imgmean, tilergb);
 				float[][] imgbb = new float[components][tilesmp];
 				matrixmultiply(imgbb, tpmencode, imgcentered, components);
-				ZipOutputStream zipoutput = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(outputfile)));
-				ZipEntry zipimage = new ZipEntry(filenameout);
-				zipoutput.putNextEntry(zipimage);
+				float imgsc = 128 / Math.max(Math.abs(matrixmax(imgbb, components)),Math.abs(matrixmin(imgbb, components)));
+				float[][] imgbbs = new float[components][tilesmp];
+				matrixscale(imgbbs, imgbb, imgsc, components);
+				
 				byte[] bbytes = new byte[4];
 				ByteBuffer bfloat = ByteBuffer.wrap(bbytes);
 				FloatBuffer cfloat = bfloat.asFloatBuffer();
+				IntBuffer ifloat = bfloat.asIntBuffer();
+				
+				ZipOutputStream zipoutput = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(outputfile)));
+				zipoutput.setLevel(Deflater.BEST_COMPRESSION);
+				ZipEntry zipimagetpm = new ZipEntry("image.tpm");
+				zipoutput.putNextEntry(zipimagetpm);
 				for (int i=0;i<tilesmp;i++) {
 					for (int j=0;j<components;j++) {
-						cfloat.put(0, imgbb[j][i]);
-						zipoutput.write(bbytes);
+						float fpval = imgbbs[j][i];
+						float intval = (float)(Math.log(Math.abs(fpval))*13.19035d+64.0d);
+						if (intval<0.0f) { intval = 0; }
+						intval = Math.copySign(intval,fpval);
+						zipoutput.write((byte)intval);
 					}
 				}
 				zipoutput.closeEntry();
+
+				ZipEntry zipmeantpm = new ZipEntry("mean.tpm");
+				zipoutput.putNextEntry(zipmeantpm);
+				for (int j=0;j<tilergb;j++) {
+					cfloat.put(0, imgmean[j]);
+					zipoutput.write(bbytes);
+				}
+				zipoutput.closeEntry();
+				
+				ZipEntry zipproptpm = new ZipEntry("prop.tpm");
+				zipoutput.putNextEntry(zipproptpm);
+				cfloat.put(0, imgsc); zipoutput.write(bbytes);
+				ifloat.put(0, components); zipoutput.write(bbytes);
+				ifloat.put(0, imgwidth); zipoutput.write(bbytes);
+				ifloat.put(0, imgheight); zipoutput.write(bbytes);
+				ifloat.put(0, tiledim); zipoutput.write(bbytes);
+				ifloat.put(0, tilesize); zipoutput.write(bbytes);
+				ifloat.put(0, tilergb); zipoutput.write(bbytes);
+				ifloat.put(0, tilex); zipoutput.write(bbytes);
+				ifloat.put(0, tiley); zipoutput.write(bbytes);
+				ifloat.put(0, tilesmp); zipoutput.write(bbytes);
+				zipoutput.closeEntry();
+				
 				zipoutput.close();
-			} catch (IOException e) {e.printStackTrace();}
+			} catch (Exception e) {e.printStackTrace();}
 		} else {
 			
 		}
@@ -101,14 +135,28 @@ public class JavaBinaryNeuralNetwork {
 		System.out.println("exit.");
 	}
 
-	public static void matrixsubtract(float[][] c, float[][] a, float[] b, int y) {
+	public static float matrixmax(float[][] a, int y) {
+		float m = Float.NEGATIVE_INFINITY;
 		for (int j=0;j<y;j++) {
 			for (int i=0;i<a[0].length;i++) {
-				c[j][i] = a[j][i] - b[j];
+				if (a[j][i]>m) {
+					m = a[j][i];
+				}
 			}
 		}
+		return m;
 	}
-	
+	public static float matrixmin(float[][] a, int y) {
+		float m = Float.POSITIVE_INFINITY;
+		for (int j=0;j<y;j++) {
+			for (int i=0;i<a[0].length;i++) {
+				if (a[j][i]<m) {
+					m = a[j][i];
+				}
+			}
+		}
+		return m;
+	}
 	public static void matrixmean(float[] c, float[][] a, int y) {
 		for (int j=0;j<y;j++) {
 			float m = 0;
@@ -119,6 +167,20 @@ public class JavaBinaryNeuralNetwork {
 		}
 	}
 	
+	public static void matrixscale(float[][] c, float[][] a, float b, int y) {
+		for (int j=0;j<y;j++) {
+			for (int i=0;i<a[0].length;i++) {
+				c[j][i] = a[j][i] * b;
+			}
+		}
+	}
+	public static void matrixsubtract(float[][] c, float[][] a, float[] b, int y) {
+		for (int j=0;j<y;j++) {
+			for (int i=0;i<a[0].length;i++) {
+				c[j][i] = a[j][i] - b[j];
+			}
+		}
+	}
 	public static void matrixmultiply(float[][] c, float[][] a, float[][] b, int y) {
 		for (int j=0;j<y;j++) {
 			for (int i=0;i<b[0].length;i++) {
