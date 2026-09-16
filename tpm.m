@@ -75,6 +75,8 @@ for n = 1:tiley
     img2((n-1)*tiledim+(1:16),(m-1)*tiledim+(1:16),:) = reshape(tile,tiledim,tiledim,3);
   endfor
 endfor
+img2(img2(:)<0) = 0;
+img2(img2(:)>255) = 255;
 img2 = cast(img2, "uint8");
 
 img = img(1:imgy,1:imgx,:);

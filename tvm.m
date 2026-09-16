@@ -12,12 +12,11 @@ function fpval = int8tofp(intval)
   fpval = sign(intval).*exp((abs(intval)-64)/13.19035);
 endfunction
 
-filename = "video3.mp4";
+filename = "video.mp4";
 vid = VideoReader(filename);
 vframes = vid.NumberOfFrames;
 imgx = vid.Width;
 imgy = vid.Height;
-
 cframes = 8;
 chunks = ceil(vframes/cframes);
 
@@ -28,7 +27,6 @@ tilex = ceil(imgx/tiledim);
 tiley = ceil(imgy/tiledim);
 tilesmp = tilex*tiley;
 swordslen = tilergb*cframes;
-
 chunkdata = zeros(tilesmp*chunks,swordslen,'uint8');
 
 for fc = 1:chunks
@@ -101,10 +99,11 @@ for n = 1:tiley
     img2((n-1)*tiledim+(1:tiledim),(m-1)*tiledim+(1:tiledim),:) = reshape(tile,tiledim,tiledim,3);
   endfor
 endfor
+img2(img2(:)<0) = 0;
+img2(img2(:)>255) = 255;
 img2 = cast(img2, "uint8");
 
 img2 = img2(1:imgy,1:imgx,:);
-#img2 = imsmooth(img2);
-#img2 = imfilter(img2,fspecial("motion"));
+img2 = imsmooth(img2);
 figure(2); image(img2); daspect([1 1]); set (gca, "Position", [0 0 1 1]); axis off;
 
