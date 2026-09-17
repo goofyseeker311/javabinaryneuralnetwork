@@ -6,13 +6,26 @@ wordsn = size(data,1);
 words = data; clear data;
 printf("words loaded (%i).\n",wordsn);
 
+tiledim = 32;
+tilesize = tiledim^2;
+tilergb = tilesize*3;
+
 swordsfull = cast(words,"double");
 swordslen = size(swordsfull,2);
-swordsmean = mean(swordsfull,1);
-swordscentered = swordsfull - swordsmean;
+swordsfull1 = swordsfull(:,0*tilesize+(1:tilesize));
+swordsfull2 = swordsfull(:,1*tilesize+(1:tilesize));
+swordsfull3 = swordsfull(:,2*tilesize+(1:tilesize));
+swordsmean1 = mean(swordsfull1,2);
+swordsmean2 = mean(swordsfull2,2);
+swordsmean3 = mean(swordsfull3,2);
+swordsmean = [swordsmean1 swordsmean2 swordsmean3];
+swordscentered1 = swordsfull1 - swordsmean1;
+swordscentered2 = swordsfull2 - swordsmean2;
+swordscentered3 = swordsfull3 - swordsmean3;
+swordscentered = [swordscentered1 swordscentered2 swordscentered3];
 printf("swords (%i,%i).\n",size(swordsfull,1),swordslen);
 
-[u, s, v] = svd(swordsfull);
+[u, s, v] = svd(swordsfull,'econ');
 vinv = (eye(swordslen)/v')';
 printf("svdinv (%i,%i).\n",size(v,1),size(v,2));
 
@@ -22,7 +35,11 @@ for n = 1:wordsn
 endfor
 
 bb = vinv * swordscentered';
-cc = (v * bb)' + swordsmean;
+cc = (v * bb)';
+cc1 = cc(:,0*tilesize+(1:tilesize)) + swordsmean(:,1);
+cc2 = cc(:,1*tilesize+(1:tilesize)) + swordsmean(:,2);
+cc3 = cc(:,2*tilesize+(1:tilesize)) + swordsmean(:,3);
+cc = [cc1 cc2 cc3];
 v2 = aa\bb';
 v3 = v2 * vinv;
 
@@ -48,10 +65,24 @@ load imagest.mat;
 wordsn = size(data,1);
 words = cast(data,"double"); clear data;
 
+swordsfull = cast(words,"double");
+swordslen = size(swordsfull,2);
+swordsfull1 = swordsfull(:,0*tilesize+(1:tilesize));
+swordsfull2 = swordsfull(:,1*tilesize+(1:tilesize));
+swordsfull3 = swordsfull(:,2*tilesize+(1:tilesize));
+swordsmean1 = mean(swordsfull1,2);
+swordsmean2 = mean(swordsfull2,2);
+swordsmean3 = mean(swordsfull3,2);
+swordsmean = [swordsmean1 swordsmean2 swordsmean3];
+swordscentered1 = swordsfull1 - swordsmean1;
+swordscentered2 = swordsfull2 - swordsmean2;
+swordscentered3 = swordsfull3 - swordsmean3;
+swordscentered = [swordscentered1 swordscentered2 swordscentered3];
+
 acc = zeros(1,wordsn);
 accc = 0;
 for n = 1:wordsn
-  c = v3 * (words(n,:) - swordsmean)';
+  c = v3 * swordscentered(n,:)';
   labelsn = labels(n);
   acc(n) = c(labelsn+1);
   [wm,im] = max(c);
@@ -67,9 +98,7 @@ printf("testing accuracy: %f\n",cacc2);
 
 word = 28;
 wordl = labels(word)+1;
-wordb = words(word,:);
-worda = cast(wordb,"double");
-wordc = v3 * (worda - swordsmean)';
+wordc = v3 * swordscentered(word,:)';
 [ws,is] = sort(wordc);
 wm1 = ws(end);
 wm2 = ws(end-1);
