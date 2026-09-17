@@ -15,7 +15,11 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
+import javax.imageio.IIOImage;
 import javax.imageio.ImageIO;
+import javax.imageio.ImageWriteParam;
+import javax.imageio.ImageWriter;
+import javax.imageio.stream.FileImageOutputStream;
 
 public class TpmImage {
 	private static final int tpmtiledim = 16;
@@ -67,10 +71,10 @@ public class TpmImage {
 				}
 			}
 		}
-		tpmmean = new float[tpmtilergb];
-		matrixmean(tpmmean, img2, tpmtilergb);
+		tpmmean = new float[tpmtilesmp*3];
+		matrixmean(tpmmean, img2, tpmtilesize, 3);
 		float[][] imgcentered = new float[tpmtilergb][tpmtilesmp];
-		matrixsubtract(imgcentered, img2, tpmmean, tpmtilergb);
+		matrixsubtract(imgcentered, img2, tpmmean, tpmtilesize, 3);
 		float[][] imgbb = new float[tpmcomps][tpmtilesmp];
 		matrixmultiply(imgbb, tpmencode, imgcentered, tpmtilesmp, tpmcomps);
 		tpmscale = 128 / Math.max(Math.abs(matrixmax(imgbb, tpmcomps)),Math.abs(matrixmin(imgbb, tpmcomps)));
@@ -106,7 +110,7 @@ public class TpmImage {
 
 			ZipEntry zipmeantpm = new ZipEntry("mean.tpm");
 			zipoutput.putNextEntry(zipmeantpm);
-			for (int j=0;j<tpmtilergb;j++) {
+			for (int j=0;j<tpmmean.length;j++) {
 				cfloat.put(0, tpmmean[j]);
 				zipoutput.write(bbytes);
 			}
@@ -182,7 +186,7 @@ public class TpmImage {
 		float[][] imgcentered = new float[tpmtilergb][tpmtilesmp];
 		matrixmultiply(imgcentered, tpmdecode, imgbb, tpmtilesmp, tpmtilergb);
 		float[][] img2 = new float[tpmtilergb][tpmtilesmp];
-		matrixaddition(img2, imgcentered, tpmmean, tpmtilergb);
+		matrixaddition(img2, imgcentered, tpmmean, tpmtilesize, 3);
 
 		BufferedImage img = new BufferedImage(tpmwidth, tpmheight, BufferedImage.TYPE_3BYTE_BGR);
 		for (int y=0;y<tpmtiley;y++) {
@@ -231,7 +235,7 @@ public class TpmImage {
 		} else {
 			tpmimage.readImage(filein);
 			BufferedImage img = tpmimage.extractImage();
-			saveImage(fileout, img);
+			saveImage(fileout, img, 1.0f);
 		}
 		System.out.println("exit.");
 	}
@@ -258,41 +262,39 @@ public class TpmImage {
 		}
 		return m;
 	}
-	public static void matrixmean(float[] c, float[][] a, int y) {
-		for (int j=0;j<y;j++) {
-			float m = 0;
+	public static void matrixmean(float[] c, float[][] a, int y, int s) {
+		for (int k=0;k<s;k++) {
 			for (int i=0;i<a[0].length;i++) {
-				m += a[j][i];
+				float m = 0;
+				for (int j=y*k;j<(y*(k+1));j++) {
+					m += a[j][i];
+				}
+				c[a[0].length*k+i] = m / (float)y;
 			}
-			c[j] = m / a[0].length;
 		}
 	}
-	
+	public static void matrixaddition(float[][] c, float[][] a, float[] b, int y, int s) {
+		for (int k=0;k<s;k++) {
+			for (int i=0;i<a[0].length;i++) {
+				for (int j=y*k;j<(y*(k+1));j++) {
+					c[j][i] = a[j][i] + b[a[0].length*k+i];
+				}
+			}
+		}
+	}
+	public static void matrixsubtract(float[][] c, float[][] a, float[] b, int y, int s) {
+		for (int k=0;k<s;k++) {
+			for (int i=0;i<a[0].length;i++) {
+				for (int j=y*k;j<(y*(k+1));j++) {
+					c[j][i] = a[j][i] - b[a[0].length*k+i];
+				}
+			}
+		}
+	}
 	public static void matrixscale(float[][] c, float[][] a, float b, int y) {
 		for (int j=0;j<y;j++) {
 			for (int i=0;i<a[0].length;i++) {
 				c[j][i] = a[j][i] * b;
-			}
-		}
-	}
-	public static void matrixaddition(float[][] c, float[][] a, float[] b, int y) {
-		for (int j=0;j<y;j++) {
-			for (int i=0;i<a[0].length;i++) {
-				c[j][i] = a[j][i] + b[j];
-			}
-		}
-	}
-	public static void matrixsubtract(float[][] c, float[][] a, float[] b, int y) {
-		for (int j=0;j<y;j++) {
-			for (int i=0;i<a[0].length;i++) {
-				c[j][i] = a[j][i] - b[j];
-			}
-		}
-	}
-	public static void matrixtranspose(float[][] c, float[][] a) {
-		for (int j=0;j<a.length;j++) {
-			for (int i=0;i<a[0].length;i++) {
-				c[j][i] = a[i][j];
 			}
 		}
 	}
@@ -307,11 +309,26 @@ public class TpmImage {
 			}
 		}
 	}
+	public static void matrixtranspose(float[][] c, float[][] a) {
+		for (int j=0;j<a.length;j++) {
+			for (int i=0;i<a[0].length;i++) {
+				c[j][i] = a[i][j];
+			}
+		}
+	}
 
-	public static void saveImage(String filenameout, BufferedImage img) {
+	public static void saveImage(String filenameout, BufferedImage img, float quality) {
 		File outputfile = new File(filenameout);
 		try {
-			ImageIO.write(img, "JPEG", outputfile);
+			ImageWriter jpegWriter = ImageIO.getImageWritersByFormatName("JPEG").next();
+			ImageWriteParam jpegParams = jpegWriter.getDefaultWriteParam();
+			jpegParams.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
+			jpegParams.setCompressionQuality(quality);
+			FileImageOutputStream outputfilestream = new FileImageOutputStream(outputfile);
+			jpegWriter.setOutput(outputfilestream);
+			IIOImage outputImage = new IIOImage(img, null, null);
+			jpegWriter.write(null, outputImage, jpegParams);
+			jpegWriter.dispose();
 		} catch (Exception e) {e.printStackTrace();}
 	}
 	public static BufferedImage loadImage(String filenamein) {
