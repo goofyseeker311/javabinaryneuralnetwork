@@ -41,13 +41,13 @@ swordsmean = mean(swordsfull,1);
 swordscentered = swordsfull - swordsmean;
 printf("swords (%i,%i).\n",size(swordsfull,1),size(swordsfull,2));
 
-svdcomps = charmax-1;
-[u, s, v] = svd(swords);
-vinv = (eye(swordslen)/v(:,1:svdcomps)')';
+svdcomps = swordslen;
+[u, s, v] = svd(swordsfull,'econ');
+vinv = (eye(swordslen)/v')';
 printf("svdinv (%i,%i).\n",size(v,1),size(v,2));
 
 bb = vinv * swordscentered';
-v2 = eye(wordsn)\bb';
+v2 = full(speye(wordsn)\sparse(bb'));
 v3 = v2 * vinv;
 
 acc = zeros(1,wordsn);
