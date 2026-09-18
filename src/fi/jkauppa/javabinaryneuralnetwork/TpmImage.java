@@ -175,10 +175,14 @@ public class TpmImage {
 			zipfile.close();
 		} catch (Exception e) {e.printStackTrace();}
 	}
-	public BufferedImage extractImage() {
-		float[][] imgbb = new float[tpmcomps][tpmtilesmp];
+	public BufferedImage extractImage(int components) {
+		int tpmcomponents = tpmcomps;
+		if (components<tpmcomponents) {
+			tpmcomponents = components;
+		}
+		float[][] imgbb = new float[tpmcomponents][tpmtilesmp];
 		for (int i=0;i<tpmtilesmp;i++) {
-			for (int j=0;j<tpmcomps;j++) {
+			for (int j=0;j<tpmcomponents;j++) {
 				float intval = tpmdata[i*tpmcomps+j];
 				imgbb[j][i] = (float)((1.0f/tpmscale)*Math.copySign(Math.exp((Math.abs(intval)-64.0d)/13.19035d),intval));
 			}
@@ -234,7 +238,7 @@ public class TpmImage {
 			tpmimage.writeImage(fileout);
 		} else {
 			tpmimage.readImage(filein);
-			BufferedImage img = tpmimage.extractImage();
+			BufferedImage img = tpmimage.extractImage(components);
 			saveImage(fileout, img, 1.0f);
 		}
 		System.out.println("exit.");
