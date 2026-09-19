@@ -45,11 +45,13 @@ printf("svdinv (%i,%i).\n",size(vv,2),size(vv,1));
 bb = vinv * swordscentered';
 sc = 128 / max(abs([min(bb(:)) max(bb(:))]));
 bb = cast(fptoint8(bb * sc),'int8');
-swordsmean = cast(swordsmean,'single');
-save -binary -zip audio.mat bb sc swordsmean swordslen svdcomps tilex tiley tiledim;
+sm = 128 / max(abs([min(swordsmean(:)) max(swordsmean(:))]));
+swordsmean = cast(fptoint8(swordsmean * sm),'int8');
+save -binary -zip audio.mat bb sc swordsmean sm swordslen svdcomps tilex tiley tiledim;
 
 clear bb sc;
 load audio.mat;
+swordsmean = int8tofp(cast(swordsmean,'double')) / sm;
 bb = int8tofp(cast(bb,'double')) / sc;
 
 aa = (vv * bb)' + swordsmean;

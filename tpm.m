@@ -65,11 +65,12 @@ bb = vinv * swordscentered';
 sc = 128 / max(abs([min(bb(:)) max(bb(:))]));
 if (isinf(sc)) sc = 1; endif
 bb = cast(fptoint8(bb * sc),'int8');
-swordsmean = cast(swordsmean,'single');
+swordsmean = cast(swordsmean,'uint8');
 save -binary -zip image.mat bb sc swordsmean swordslen svdcomps tilex tiley tiledim imgx imgy;
 
 clear bb sc;
 load image.mat;
+swordsmean = cast(swordsmean,'double');
 bb = int8tofp(cast(bb,'double')) / sc;
 
 aa = (vv * bb)';

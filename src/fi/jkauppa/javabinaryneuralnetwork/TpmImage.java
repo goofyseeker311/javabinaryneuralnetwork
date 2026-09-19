@@ -33,7 +33,7 @@ public class TpmImage {
 	}
 
 	private byte[] tpmdata = null;
-	private float[] tpmmean = null;
+	private byte[] tpmmean = null;
 	private float tpmscale = 1;
 	private int tpmcomps = 0;
 	private int tpmwidth = 0;
@@ -71,10 +71,14 @@ public class TpmImage {
 				}
 			}
 		}
-		tpmmean = new float[tpmtilesmp*3];
-		matrixmean(tpmmean, img2, tpmtilesize, 3);
+		float[] imgmean = new float[tpmtilesmp*3];
+		matrixmean(imgmean, img2, tpmtilesize, 3);
+		tpmmean = new byte[tpmtilesmp*3];
+		for ( int i=0;i<tpmmean.length;i++) {
+			tpmmean[i] = (byte)((int)imgmean[i]);
+		}
 		float[][] imgcentered = new float[tpmtilergb][tpmtilesmp];
-		matrixsubtract(imgcentered, img2, tpmmean, tpmtilesize, 3);
+		matrixsubtract(imgcentered, img2, imgmean, tpmtilesize, 3);
 		float[][] imgbb = new float[tpmcomps][tpmtilesmp];
 		matrixmultiply(imgbb, tpmencode, imgcentered, tpmtilesmp, tpmcomps);
 		tpmscale = 128 / Math.max(Math.abs(matrixmax(imgbb, tpmcomps)),Math.abs(matrixmin(imgbb, tpmcomps)));
@@ -110,10 +114,7 @@ public class TpmImage {
 
 			ZipEntry zipmeantpm = new ZipEntry("mean.tpm");
 			zipoutput.putNextEntry(zipmeantpm);
-			for (int j=0;j<tpmmean.length;j++) {
-				cfloat.put(0, tpmmean[j]);
-				zipoutput.write(bbytes);
-			}
+			zipoutput.write(tpmmean);
 			zipoutput.closeEntry();
 			
 			ZipEntry zipproptpm = new ZipEntry("prop.tpm");
@@ -146,13 +147,9 @@ public class TpmImage {
 
 			ZipEntry zipmeantpm = zipfile.getEntry("mean.tpm");
 			BufferedInputStream zipmeaninput = new BufferedInputStream(zipfile.getInputStream(zipmeantpm));
-			byte[] meanbytes = new byte[zipmeaninput.available()];
+			tpmmean = new byte[zipmeaninput.available()];
 			DataInputStream zipmeanstream = new DataInputStream(zipmeaninput);
-			zipmeanstream.readFully(meanbytes);
-			ByteBuffer meanbytebuffer = ByteBuffer.wrap(meanbytes);
-			FloatBuffer meanfloatbuffer = meanbytebuffer.asFloatBuffer();
-			tpmmean = new float[meanfloatbuffer.remaining()];
-			meanfloatbuffer.get(tpmmean);
+			zipmeanstream.readFully(tpmmean);
 
 			ZipEntry zipproptpm = zipfile.getEntry("prop.tpm");
 			BufferedInputStream zippropinput = new BufferedInputStream(zipfile.getInputStream(zipproptpm));
@@ -189,8 +186,12 @@ public class TpmImage {
 		}
 		float[][] imgcentered = new float[tpmtilergb][tpmtilesmp];
 		matrixmultiply(imgcentered, tpmdecode, imgbb, tpmtilesmp, tpmtilergb);
+		float[] imgmean = new float[tpmtilesmp*3];
+		for ( int i=0;i<tpmmean.length;i++) {
+			imgmean[i] = (float)(Byte.toUnsignedInt(tpmmean[i]));
+		}
 		float[][] img2 = new float[tpmtilergb][tpmtilesmp];
-		matrixaddition(img2, imgcentered, tpmmean, tpmtilesize, 3);
+		matrixaddition(img2, imgcentered, imgmean, tpmtilesize, 3);
 
 		BufferedImage img = new BufferedImage(tpmwidth, tpmheight, BufferedImage.TYPE_3BYTE_BGR);
 		for (int y=0;y<tpmtiley;y++) {

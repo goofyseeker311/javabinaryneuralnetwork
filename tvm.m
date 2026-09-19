@@ -101,7 +101,7 @@ for fc = 1:cframes:vframes
   sc = 128 / max(abs([min(bb(:)) max(bb(:))]));
   if (isinf(sc)) sc = 1; endif
   bb = cast(fptoint8(bb * sc),'int8');
-  chunkmean = cast(chunkmean,'single');
+  chunkmean = cast(chunkmean,'uint8');
 
   savefile = sprintf("output/video%i.mat",fc);
   save("-binary", "-zip", savefile, "bb", "sc", "chunkmean", "swordslen", "svdcomps", "imgx", "imgy", "tiledim", "tilesize", "tilergb", "tilex", "tiley", "tilesmp");
@@ -110,6 +110,7 @@ endfor
 
 clear bb sc;
 load "output/video1.mat";
+chunkmean = cast(chunkmean,'double');
 bb = int8tofp(cast(bb,'double')) / sc;
 aa = (vv * bb)';
 aa1 = aa(:,chunkindex1) + chunkmean(:,1);
