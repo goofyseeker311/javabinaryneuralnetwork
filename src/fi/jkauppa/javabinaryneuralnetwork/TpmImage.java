@@ -88,11 +88,7 @@ public class TpmImage {
 		tpmdata = new byte[tpmcomps*tpmtilesmp];
 		for (int i=0;i<tpmtilesmp;i++) {
 			for (int j=0;j<tpmcomps;j++) {
-				float fpval = imgbbs[j][i];
-				float intval = (float)(Math.log(Math.abs(fpval))*13.19035d+64.0d);
-				if (intval<0.0f) { intval = 0; }
-				intval = Math.copySign(intval,fpval);
-				tpmdata[i*tpmcomps+j] = (byte)intval;
+				tpmdata[i*tpmcomps+j] = (byte)imgbbs[j][i];
 			}
 		}
 	}
@@ -180,8 +176,7 @@ public class TpmImage {
 		float[][] imgbb = new float[tpmcomponents][tpmtilesmp];
 		for (int i=0;i<tpmtilesmp;i++) {
 			for (int j=0;j<tpmcomponents;j++) {
-				float intval = tpmdata[i*tpmcomps+j];
-				imgbb[j][i] = (float)((1.0f/tpmscale)*Math.copySign(Math.exp((Math.abs(intval)-64.0d)/13.19035d),intval));
+				imgbb[j][i] = (1.0f/tpmscale)*(float)tpmdata[i*tpmcomps+j];
 			}
 		}
 		float[][] imgcentered = new float[tpmtilergb][tpmtilesmp];

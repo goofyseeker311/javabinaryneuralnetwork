@@ -1,15 +1,5 @@
 close all; clear; output_precision(16);
 
-function intval = fptoint8(fpval)
-  intval = log(abs(fpval))*13.19035+64;
-  intval(intval<0) = 0;
-  intval = intval.*sign(fpval);
-endfunction
-
-function fpval = int8tofp(intval)
-  fpval = sign(intval).*exp((abs(intval)-64)/13.19035);
-endfunction
-
 img = imread("image.jpg");
 
 tiledim = 16;
@@ -64,14 +54,14 @@ printf("svdinv (%i,%i).\n",size(vv,2),size(vv,1));
 bb = vinv * swordscentered';
 sc = 128 / max(abs([min(bb(:)) max(bb(:))]));
 if (isinf(sc)) sc = 1; endif
-bb = cast(fptoint8(bb * sc),'int8');
+bb = cast(bb * sc,'int8');
 swordsmean = cast(swordsmean,'uint8');
 save -binary -zip image.mat bb sc swordsmean swordslen svdcomps tilex tiley tiledim imgx imgy;
 
 clear bb sc;
 load image.mat;
 swordsmean = cast(swordsmean,'double');
-bb = int8tofp(cast(bb,'double')) / sc;
+bb = cast(bb,'double') / sc;
 
 aa = (vv * bb)';
 aa1 = aa(:,0*tilesize+(1:tilesize)) + swordsmean(:,1);

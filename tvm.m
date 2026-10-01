@@ -2,16 +2,6 @@ close all; clear; output_precision(16);
 
 pkg load video image;
 
-function intval = fptoint8(fpval)
-  intval = log(abs(fpval))*13.19035+64;
-  intval(intval<0) = 0;
-  intval = intval.*sign(fpval);
-endfunction
-
-function fpval = int8tofp(intval)
-  fpval = sign(intval).*exp((abs(intval)-64)/13.19035);
-endfunction
-
 filename = "video.mp4";
 vid = VideoReader(filename);
 vframes = vid.NumberOfFrames;
@@ -100,7 +90,7 @@ for fc = 1:cframes:vframes
   bb = vinv * chunkcentered';
   sc = 128 / max(abs([min(bb(:)) max(bb(:))]));
   if (isinf(sc)) sc = 1; endif
-  bb = cast(fptoint8(bb * sc),'int8');
+  bb = cast(bb * sc,'int8');
   chunkmean = cast(chunkmean,'uint8');
 
   savefile = sprintf("output/video%i.mat",fc);
@@ -111,7 +101,7 @@ endfor
 clear bb sc;
 load "output/video1.mat";
 chunkmean = cast(chunkmean,'double');
-bb = int8tofp(cast(bb,'double')) / sc;
+bb = cast(bb,'double') / sc;
 aa = (vv * bb)';
 aa1 = aa(:,chunkindex1) + chunkmean(:,1);
 aa2 = aa(:,chunkindex2) + chunkmean(:,2);
