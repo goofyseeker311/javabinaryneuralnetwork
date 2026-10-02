@@ -2,7 +2,26 @@ close all; clear; output_precision(16);
 
 img = imread("image.jpg");
 
-tiledim = 16;
+ccolors = [
+  0x00 0x00 0x00
+  0xff 0xff 0xff
+  0x88 0x00 0x00
+  0xAA 0xFF 0xEE
+  0xCC 0x44 0xCC
+  0x00 0xCC 0x55
+  0x00 0x00 0xAA
+  0xEE 0xEE 0x77
+  0xDD 0x88 0x55
+  0x66 0x44 0x00
+  0xFF 0x77 0x77
+  0x33 0x33 0x33
+  0x77 0x77 0x77
+  0xAA 0xFF 0x66
+  0x00 0x88 0xFF
+  0xBB 0xBB 0xBB
+];
+
+tiledim = 8;
 tilesize = tiledim^2;
 tilergb = tilesize*3;
 imgx = size(img,2);
@@ -20,6 +39,18 @@ for n = 1:tiley
 endfor
 
 wordsn = size(data,1);
+for n = 1:wordsn
+  for m = 1:tilesize
+    ivalue = [m m+tilesize m+2*tilesize];
+    cvalue = [data(n,ivalue)];
+    dvalue = cast(ccolors,'double') - cvalue;
+    lvalue = dot(dvalue,dvalue,2);
+    [ls,li] = sort(lvalue);
+    nvalue = ccolors(li(1),:);
+    data(n,ivalue) = nvalue;
+  endfor
+endfor
+
 words = data;
 printf("words loaded (%i).\n",wordsn);
 
@@ -42,13 +73,6 @@ svdcomps = swordslen;
 [u, s, v] = svd(swordsfull,'econ');
 vv = v(:,1:svdcomps);
 vinv = (eye(swordslen)/vv')';
-vinvfn = "tpm.bin";
-fopen(vinvfn,'w');
-fwrite(vinvfn,cast(vinv,'single')','single',0,'b');
-fclose(vinvfn);
-fopen(vinvfn);
-vinvb = cast(fread(vinvfn,[svdcomps Inf],'int8',0,'b'),'int8');
-fclose(vinvfn);
 printf("svdinv (%i,%i).\n",size(vv,2),size(vv,1));
 
 bb = vinv * swordscentered';
