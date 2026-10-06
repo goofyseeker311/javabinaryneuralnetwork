@@ -32,13 +32,13 @@ imgy = size(img,1);
 tilex = ceil(imgx/tiledim);
 tiley = ceil(imgy/tiledim);
 data = zeros(tilex*tiley,tilesize);
+colors = zeros(tilex*tiley,2);
 
 img(tiley*tiledim,tilex*tiledim,:) = [0,0,0];
 for n = 1:tiley
   for m = 1:tilex
     tile = img((n-1)*tiledim+(1:tiledim),(m-1)*tiledim+(1:tiledim),:);
-    tiledither = dither(tile,c64map,1,1);
-    tileunique = unique(tiledither);
+    tiledither = dither(tile,c64map);
     tilesum = sum(tiledither(:)==0:c64n-1);
     [tilesort,tilesorti] = sort(tilesum);
     tilecolorsi = tilesorti(flip(1:c64n));
@@ -51,6 +51,9 @@ for n = 1:tiley
     for k = 1:c64n
       tiledither(tiledither==(k-1)) = colorchoice(k) - 1;
     endfor
+    tiledither(tiledither==(tilecolorsi(1)-1)) = 0;
+    tiledither(tiledither==(tilecolorsi(2)-1)) = 1;
+    colors((n-1)*tilex+m,:) = tilecolorsi([1 2])-1;
     data((n-1)*tilex+m,:) = reshape(tiledither,1,tilesize);
   endfor
 endfor
@@ -61,7 +64,7 @@ printf("words loaded (%i).\n",wordsn);
 
 swordsfull = cast(words,"double");
 swordslen = size(swordsfull,2);
-swordsmean = mean(swordsfull,2);
+swordsmean = 0.5;
 swordscentered = swordsfull - swordsmean;
 printf("swords (%i,%i).\n",size(swordsfull,1),swordslen);
 
@@ -75,12 +78,10 @@ bb = vinv * swordscentered';
 sc = 128 / max(abs([min(bb(:)) max(bb(:))]));
 if (isinf(sc)) sc = 1; endif
 bb = cast(bb * sc,'int8');
-swordsmean = cast(swordsmean,'uint8');
-save -binary -zip image.mat bb sc swordsmean swordslen svdcomps tilex tiley tiledim imgx imgy;
+save -binary -zip image.mat bb sc swordsmean colors swordslen svdcomps tilex tiley tiledim imgx imgy;
 
 clear bb sc;
 load image.mat;
-swordsmean = cast(swordsmean,'double');
 bb = cast(bb,'double') / sc;
 
 aa = (vv * bb)' + swordsmean;
@@ -88,11 +89,16 @@ cc = svdcomps / swordslen;
 ad = data - aa;
 dd = mean(abs(ad(:)));
 dds = std(ad(:));
+aa = cast(aa,'uint8');
 
 img2 = zeros(tiley*tiledim,tilex*tiledim);
 for n = 1:tiley
   for m = 1:tilex
     tile = aa((n-1)*tilex+m,:);
+    tilei1 = tile==0;
+    tilei2 = tile==1;
+    tile(tilei1) = colors((n-1)*tilex+m,1);
+    tile(tilei2) = colors((n-1)*tilex+m,2);
     img2((n-1)*tiledim+(1:tiledim),(m-1)*tiledim+(1:tiledim),:) = reshape(tile,tiledim,tiledim);
   endfor
 endfor
