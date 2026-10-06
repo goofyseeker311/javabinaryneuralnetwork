@@ -2,7 +2,7 @@ close all; clear; output_precision(16);
 
 img = imread("image.jpg");
 
-ccolors = [
+c64colors = [
   0x00 0x00 0x00
   0xff 0xff 0xff
   0x88 0x00 0x00
@@ -20,6 +20,8 @@ ccolors = [
   0x00 0x88 0xFF
   0xBB 0xBB 0xBB
 ];
+c64rgb = cast(c64colors,'double');
+c64map = c64rgb/255;
 
 tiledim = 8;
 tilesize = tiledim^2;
@@ -28,45 +30,27 @@ imgx = size(img,2);
 imgy = size(img,1);
 tilex = ceil(imgx/tiledim);
 tiley = ceil(imgy/tiledim);
-data = zeros(tilex*tiley,tilergb);
+data = zeros(tilex*tiley,tilesize);
 
+tileunique = 0;
 img(tiley*tiledim,tilex*tiledim,:) = [0,0,0];
 for n = 1:tiley
   for m = 1:tilex
     tile = img((n-1)*tiledim+(1:tiledim),(m-1)*tiledim+(1:tiledim),:);
-    data((n-1)*tilex+m,:) = reshape(tile,1,tilergb);
+    tiledither = dither(tile,c64map,1,1);
+    tileunique += size(tileunique,1)>2;
+    data((n-1)*tilex+m,:) = reshape(tiledither,1,tilesize);
   endfor
 endfor
 
 wordsn = size(data,1);
-for n = 1:wordsn
-  for m = 1:tilesize
-    ivalue = [m m+tilesize m+2*tilesize];
-    cvalue = [data(n,ivalue)];
-    dvalue = cast(ccolors,'double') - cvalue;
-    lvalue = dot(dvalue,dvalue,2);
-    [ls,li] = sort(lvalue);
-    nvalue = ccolors(li(1),:);
-    data(n,ivalue) = nvalue;
-  endfor
-endfor
-
 words = data;
 printf("words loaded (%i).\n",wordsn);
 
 swordsfull = cast(words,"double");
 swordslen = size(swordsfull,2);
-swordsfull1 = swordsfull(:,0*tilesize+(1:tilesize));
-swordsfull2 = swordsfull(:,1*tilesize+(1:tilesize));
-swordsfull3 = swordsfull(:,2*tilesize+(1:tilesize));
-swordsmean1 = mean(swordsfull1,2);
-swordsmean2 = mean(swordsfull2,2);
-swordsmean3 = mean(swordsfull3,2);
-swordsmean = [swordsmean1 swordsmean2 swordsmean3];
-swordscentered1 = swordsfull1 - swordsmean1;
-swordscentered2 = swordsfull2 - swordsmean2;
-swordscentered3 = swordsfull3 - swordsmean3;
-swordscentered = [swordscentered1 swordscentered2 swordscentered3];
+swordsmean = mean(swordsfull,2);
+swordscentered = swordsfull - swordsmean;
 printf("swords (%i,%i).\n",size(swordsfull,1),swordslen);
 
 svdcomps = swordslen;
@@ -87,25 +71,21 @@ load image.mat;
 swordsmean = cast(swordsmean,'double');
 bb = cast(bb,'double') / sc;
 
-aa = (vv * bb)';
-aa1 = aa(:,0*tilesize+(1:tilesize)) + swordsmean(:,1);
-aa2 = aa(:,1*tilesize+(1:tilesize)) + swordsmean(:,2);
-aa3 = aa(:,2*tilesize+(1:tilesize)) + swordsmean(:,3);
-aa = [aa1 aa2 aa3];
+aa = (vv * bb)' + swordsmean;
 cc = svdcomps / swordslen;
 ad = data - aa;
 dd = mean(abs(ad(:)));
 dds = std(ad(:));
 
-img2 = zeros(tiley*tiledim,tilex*tiledim,3);
+img2 = zeros(tiley*tiledim,tilex*tiledim);
 for n = 1:tiley
   for m = 1:tilex
     tile = aa((n-1)*tilex+m,:);
-    img2((n-1)*tiledim+(1:tiledim),(m-1)*tiledim+(1:tiledim),:) = reshape(tile,tiledim,tiledim,3);
+    img2((n-1)*tiledim+(1:tiledim),(m-1)*tiledim+(1:tiledim),:) = reshape(tile,tiledim,tiledim);
   endfor
 endfor
 img2(img2(:)<0) = 0;
-img2(img2(:)>255) = 255;
+img2(img2(:)>15) = 15;
 img2 = cast(img2, "uint8");
 
 img = img(1:imgy,1:imgx,:);
