@@ -22,6 +22,7 @@ c64colors = [
 ];
 c64rgb = cast(c64colors,'double');
 c64map = c64rgb/255;
+c64n = size(c64colors,1);
 
 tiledim = 8;
 tilesize = tiledim^2;
@@ -32,13 +33,24 @@ tilex = ceil(imgx/tiledim);
 tiley = ceil(imgy/tiledim);
 data = zeros(tilex*tiley,tilesize);
 
-tileunique = 0;
 img(tiley*tiledim,tilex*tiledim,:) = [0,0,0];
 for n = 1:tiley
   for m = 1:tilex
     tile = img((n-1)*tiledim+(1:tiledim),(m-1)*tiledim+(1:tiledim),:);
     tiledither = dither(tile,c64map,1,1);
-    tileunique += size(tileunique,1)>2;
+    tileunique = unique(tiledither);
+    tilesum = sum(tiledither(:)==0:c64n-1);
+    [tilesort,tilesorti] = sort(tilesum);
+    tilecolorsi = tilesorti(flip(1:c64n));
+    color1diff = c64rgb-c64rgb(tilecolorsi(1),:);
+    color1diffd = dot(color1diff,color1diff,2);
+    color2diff = c64rgb-c64rgb(tilecolorsi(2),:);
+    color2diffd = dot(color2diff,color2diff,2);
+    colorchoice = tilecolorsi(1)*ones(c64n,1);
+    colorchoice(color2diffd<color1diffd) = tilecolorsi(2);
+    for k = 1:c64n
+      tiledither(tiledither==(k-1)) = colorchoice(k) - 1;
+    endfor
     data((n-1)*tilex+m,:) = reshape(tiledither,1,tilesize);
   endfor
 endfor
