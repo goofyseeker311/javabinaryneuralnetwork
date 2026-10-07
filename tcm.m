@@ -50,7 +50,8 @@ for n = 1:tiley
     colorchoice = tilecolorsi(1)*ones(tilesize,1);
     colorchoice(color2diffd<color1diffd) = tilecolorsi(2);
     for k = tilecolorsi(3:end)
-      tiledither(tiledither==(k-1)) = colorchoice(k) - 1;
+      tilei = tiledither(:)==(k-1);
+      tiledither(tilei) = colorchoice(tilei) - 1;
     endfor
     tilei1 = tiledither==(tilecolorsi(1)-1);
     tilei2 = tiledither==(tilecolorsi(2)-1);
