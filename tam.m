@@ -32,7 +32,7 @@ printf("words loaded (%i).\n",wordsn);
 
 swordsfull = cast(words,"double");
 swordslen = size(swordsfull,2);
-swordsmean = mean(swordsfull,2);
+swordsmean = 0;
 swordscentered = swordsfull - swordsmean;
 printf("swords (%i,%i).\n",size(swordsfull,1),swordslen);
 
@@ -45,13 +45,10 @@ printf("svdinv (%i,%i).\n",size(vv,2),size(vv,1));
 bb = vinv * swordscentered';
 sc = 128 / max(abs([min(bb(:)) max(bb(:))]));
 bb = cast(fptoint8(bb * sc),'int8');
-sm = 128 / max(abs([min(swordsmean(:)) max(swordsmean(:))]));
-swordsmean = cast(fptoint8(swordsmean * sm),'int8');
-save -binary -zip audio.mat bb sc swordsmean sm swordslen svdcomps tilex tiley tiledim;
+save -binary -zip audio.mat bb sc swordsmean swordslen svdcomps tilex tiley tiledim;
 
 clear bb sc;
 load audio.mat;
-swordsmean = int8tofp(cast(swordsmean,'double')) / sm;
 bb = int8tofp(cast(bb,'double')) / sc;
 
 aa = (vv * bb)' + swordsmean;

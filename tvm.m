@@ -44,15 +44,6 @@ vv = v(:,1:svdcomps);
 vinv = (eye(swordslen)/vv')';
 
 
-chunkindex1 = [];
-chunkindex2 = [];
-chunkindex3 = [];
-for k = 1:cframes
-  chunkindex1 = [chunkindex1 ((k-1)*3+0)*tilesize+(1:tilesize)];
-  chunkindex2 = [chunkindex2 ((k-1)*3+1)*tilesize+(1:tilesize)];
-  chunkindex3 = [chunkindex3 ((k-1)*3+2)*tilesize+(1:tilesize)];
-endfor
-
 mkdir output;
 vid = VideoReader(filename);
 
@@ -72,26 +63,13 @@ for fc = 1:cframes:vframes
     endfor
   endfor
 
-  chunkfull1 = chunkfull(:,chunkindex1);
-  chunkfull2 = chunkfull(:,chunkindex2);
-  chunkfull3 = chunkfull(:,chunkindex3);
-  chunkmean1 = mean(chunkfull1,2);
-  chunkmean2 = mean(chunkfull2,2);
-  chunkmean3 = mean(chunkfull3,2);
-  chunkmean = [chunkmean1 chunkmean2 chunkmean3];
-  chunkcentered1 = chunkfull1 - chunkmean1;
-  chunkcentered2 = chunkfull2 - chunkmean2;
-  chunkcentered3 = chunkfull3 - chunkmean3;
-  chunkcentered = [];
-  chunkcentered(:,chunkindex1) = chunkcentered1;
-  chunkcentered(:,chunkindex2) = chunkcentered2;
-  chunkcentered(:,chunkindex3) = chunkcentered3;
+  chunkmean = 128;
+  chunkcentered = chunkfull - chunkmean;
 
   bb = vinv * chunkcentered';
   sc = 128 / max(abs([min(bb(:)) max(bb(:))]));
   if (isinf(sc)) sc = 1; endif
   bb = cast(bb * sc,'int8');
-  chunkmean = cast(chunkmean,'uint8');
 
   savefile = sprintf("output/video%i.mat",fc);
   save("-binary", "-zip", savefile, "bb", "sc", "chunkmean", "swordslen", "svdcomps", "imgx", "imgy", "tiledim", "tilesize", "tilergb", "tilex", "tiley", "tilesmp");
@@ -100,16 +78,8 @@ endfor
 
 clear bb sc;
 load "output/video1.mat";
-chunkmean = cast(chunkmean,'double');
 bb = cast(bb,'double') / sc;
-aa = (vv * bb)';
-aa1 = aa(:,chunkindex1) + chunkmean(:,1);
-aa2 = aa(:,chunkindex2) + chunkmean(:,2);
-aa3 = aa(:,chunkindex3) + chunkmean(:,3);
-aa = [];
-aa(:,chunkindex1) = aa1;
-aa(:,chunkindex2) = aa2;
-aa(:,chunkindex3) = aa3;
+aa = (vv * bb)' + chunkmean;
 
 k = 1;
 img2 = zeros(tiley*tiledim,tilex*tiledim,3);
