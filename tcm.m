@@ -38,14 +38,13 @@ img(tiley*tiledim,tilex*tiledim,:) = [0,0,0];
 for n = 1:tiley
   for m = 1:tilex
     tile = img((n-1)*tiledim+(1:tiledim),(m-1)*tiledim+(1:tiledim),:);
-    tilepixel = cast(reshape(tile,tilesize,3),'double');
     tiledither = dither(tile,c64map);
     tilesum = sum(tiledither(:)==0:c64n-1);
     [tilesort,tilesorti] = sort(tilesum);
     tilecolorsi = tilesorti(flip(1:c64n));
-    color1diff = tilepixel-c64rgb(tilecolorsi(1),:);
+    color1diff = c64rgb-c64rgb(tilecolorsi(1),:);
     color1diffd = dot(color1diff,color1diff,2);
-    color2diff = tilepixel-c64rgb(tilecolorsi(2),:);
+    color2diff = c64rgb-c64rgb(tilecolorsi(2),:);
     color2diffd = dot(color2diff,color2diff,2);
     colorchoice = tilecolorsi(1)*ones(tilesize,1);
     colorchoice(color2diffd<color1diffd) = tilecolorsi(2);
@@ -94,6 +93,8 @@ ad = data - aa;
 dd = mean(abs(ad(:)));
 dds = std(ad(:));
 aa = cast(aa,'uint8');
+aa(aa(:)<0) = 0;
+aa(aa(:)>1) = 1;
 
 img2 = zeros(tiley*tiledim,tilex*tiledim);
 for n = 1:tiley
@@ -106,8 +107,6 @@ for n = 1:tiley
     img2((n-1)*tiledim+(1:tiledim),(m-1)*tiledim+(1:tiledim),:) = reshape(tile,tiledim,tiledim);
   endfor
 endfor
-img2(img2(:)<0) = 0;
-img2(img2(:)>15) = 15;
 img2 = cast(img2, "uint8");
 
 img = img(1:imgy,1:imgx,:);
