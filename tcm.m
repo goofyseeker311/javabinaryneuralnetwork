@@ -70,14 +70,14 @@ swordsmean = 0.5;
 swordscentered = swordsfull - swordsmean;
 printf("swords (%i,%i).\n",size(swordsfull,1),swordslen);
 
-svdcomps = swordslen;
+svdcomps = 5;
 [u, s, v] = svd(swordsfull,'econ');
 vv = v(:,1:svdcomps);
 vinv = (eye(swordslen)/vv')';
 printf("svdinv (%i,%i).\n",size(vv,2),size(vv,1));
 
 bb = vinv * swordscentered';
-sc = 128 / max(abs([min(bb(:)) max(bb(:))]));
+sc = 2 / max(abs([min(bb(:)) max(bb(:))]));
 if (isinf(sc)) sc = 1; endif
 bb = cast(bb * sc,'int8');
 save -binary -zip image.mat bb sc swordsmean colors swordslen svdcomps tilex tiley tiledim imgx imgy;
@@ -91,8 +91,9 @@ cc = svdcomps / swordslen;
 ad = data - aa;
 dd = mean(abs(ad(:)));
 dds = std(ad(:));
-aa = cast(aa,'uint8');
+aa(aa(:)<0) = 0;
 aa(aa(:)>1) = 1;
+aa = cast(aa,'uint8');
 
 img2 = zeros(tiley*tiledim,tilex*tiledim);
 for n = 1:tiley
