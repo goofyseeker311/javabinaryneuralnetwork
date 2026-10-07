@@ -46,11 +46,10 @@ for n = 1:tiley
     color1diffd = dot(color1diff,color1diff,2);
     color2diff = c64rgb-c64rgb(tilecolorsi(2),:);
     color2diffd = dot(color2diff,color2diff,2);
-    colorchoice = tilecolorsi(1)*ones(tilesize,1);
+    colorchoice = tilecolorsi(1)*ones(c64n,1);
     colorchoice(color2diffd<color1diffd) = tilecolorsi(2);
     for k = tilecolorsi(3:end)
-      tilei = tiledither(:)==(k-1);
-      tiledither(tilei) = colorchoice(tilei) - 1;
+      tiledither(tiledither(:)==(k-1)) = colorchoice(k) - 1;
     endfor
     tilei1 = tiledither==(tilecolorsi(1)-1);
     tilei2 = tiledither==(tilecolorsi(2)-1);
@@ -93,7 +92,6 @@ ad = data - aa;
 dd = mean(abs(ad(:)));
 dds = std(ad(:));
 aa = cast(aa,'uint8');
-aa(aa(:)<0) = 0;
 aa(aa(:)>1) = 1;
 
 img2 = zeros(tiley*tiledim,tilex*tiledim);
