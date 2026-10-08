@@ -72,8 +72,14 @@ public class OCLTpmImage extends TpmImage {
 				}
 			}
 		}
+		Matrix imgmean = new Matrix(tpmtilesmp,3);
+		matrixmean(imgmean, img2, tpmtilesize, 3);
+		tpmmean = new byte[tpmtilesmp*3];
+		for ( int i=0;i<tpmmean.length;i++) {
+			tpmmean[i] = (byte)((int)imgmean.v[i]);
+		}
 		Matrix imgcentered = new Matrix(tpmtilergb,tpmtilesmp);
-		matrixsubtract(imgcentered, img2, tpmmean, tpmtilergb);
+		matrixsubtract(imgcentered, img2, imgmean, tpmtilesize, 3);
 		Matrix imgbb = new Matrix(tpmcomps,tpmtilesmp);
 		matrixmultiply(imgbb, tpmencode, imgcentered, tpmtilesmp, tpmcomps);
 		tpmscale = 128 / Math.max(Math.abs(matrixmax(imgbb, tpmcomps)),Math.abs(matrixmin(imgbb, tpmcomps)));
@@ -101,8 +107,12 @@ public class OCLTpmImage extends TpmImage {
 		}
 		Matrix imgcentered = new Matrix(tpmtilergb,tpmtilesmp);
 		matrixmultiply(imgcentered, tpmdecode, imgbb, tpmtilesmp, tpmtilergb);
+		Matrix imgmean = new Matrix(tpmtilesmp,3);
+		for (int i=0;i<tpmmean.length;i++) {
+			imgmean.v[i] = (float)(Byte.toUnsignedInt(tpmmean[i]));
+		}
 		Matrix img2 = new Matrix(tpmtilergb,tpmtilesmp);
-		matrixaddition(img2, imgcentered, tpmmean, tpmtilergb);
+		matrixaddition(img2, imgcentered, imgmean, tpmtilesize, 3);
 
 		BufferedImage img = new BufferedImage(tpmwidth, tpmheight, BufferedImage.TYPE_3BYTE_BGR);
 		for (int y=0;y<tpmtiley;y++) {

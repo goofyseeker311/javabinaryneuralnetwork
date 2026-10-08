@@ -25,7 +25,6 @@ public class TpmImage {
 	public static final int tpmtiledim = 16;
 	public static final int tpmtilesize = tpmtiledim*tpmtiledim;
 	public static final int tpmtilergb = tpmtilesize*3;
-	public static final float tpmmean = 128;
 	public static final Matrix tpmencode = new Matrix(tpmtilergb,tpmtilergb);
 	public static final Matrix tpmdecode = new Matrix(tpmtilergb,tpmtilergb);
 	static {
@@ -34,6 +33,7 @@ public class TpmImage {
 	}
 
 	protected byte[] tpmdata = null;
+	protected byte[] tpmmean = null;
 	protected float tpmscale = 1;
 	protected int tpmcomps = 0;
 	protected int tpmwidth = 0;
@@ -71,8 +71,14 @@ public class TpmImage {
 				}
 			}
 		}
+		Matrix imgmean = new Matrix(tpmtilesmp,3);
+		matrixmean(imgmean, img2, tpmtilesize, 3);
+		tpmmean = new byte[tpmtilesmp*3];
+		for ( int i=0;i<tpmmean.length;i++) {
+			tpmmean[i] = (byte)((int)imgmean.v[i]);
+		}
 		Matrix imgcentered = new Matrix(tpmtilergb,tpmtilesmp);
-		matrixsubtract(imgcentered, img2, tpmmean, tpmtilergb);
+		matrixsubtract(imgcentered, img2, imgmean, tpmtilesize, 3);
 		Matrix imgbb = new Matrix(tpmcomps,tpmtilesmp);
 		matrixmultiply(imgbb, tpmencode, imgcentered, tpmtilesmp, tpmcomps);
 		tpmscale = 128 / Math.max(Math.abs(matrixmax(imgbb, tpmcomps)),Math.abs(matrixmin(imgbb, tpmcomps)));
@@ -100,6 +106,11 @@ public class TpmImage {
 			ZipEntry zipimagetpm = new ZipEntry("image.tpm");
 			zipoutput.putNextEntry(zipimagetpm);
 			zipoutput.write(tpmdata);
+			zipoutput.closeEntry();
+
+			ZipEntry zipmeantpm = new ZipEntry("mean.tpm");
+			zipoutput.putNextEntry(zipmeantpm);
+			zipoutput.write(tpmmean);
 			zipoutput.closeEntry();
 			
 			ZipEntry zipproptpm = new ZipEntry("prop.tpm");
@@ -130,6 +141,12 @@ public class TpmImage {
 			DataInputStream zipimagestream = new DataInputStream(zipimageinput);
 			zipimagestream.readFully(tpmdata);
 
+			ZipEntry zipmeantpm = zipfile.getEntry("mean.tpm");
+			BufferedInputStream zipmeaninput = new BufferedInputStream(zipfile.getInputStream(zipmeantpm));
+			tpmmean = new byte[zipmeaninput.available()];
+			DataInputStream zipmeanstream = new DataInputStream(zipmeaninput);
+			zipmeanstream.readFully(tpmmean);
+			
 			ZipEntry zipproptpm = zipfile.getEntry("prop.tpm");
 			BufferedInputStream zippropinput = new BufferedInputStream(zipfile.getInputStream(zipproptpm));
 			byte[] propbytes = new byte[zippropinput.available()];
@@ -164,8 +181,12 @@ public class TpmImage {
 		}
 		Matrix imgcentered = new Matrix(tpmtilergb,tpmtilesmp);
 		matrixmultiply(imgcentered, tpmdecode, imgbb, tpmtilesmp, tpmtilergb);
+		Matrix imgmean = new Matrix(tpmtilesmp,3);
+		for (int i=0;i<tpmmean.length;i++) {
+			imgmean.v[i] = (float)(Byte.toUnsignedInt(tpmmean[i]));
+		}
 		Matrix img2 = new Matrix(tpmtilergb,tpmtilesmp);
-		matrixaddition(img2, imgcentered, tpmmean, tpmtilergb);
+		matrixaddition(img2, imgcentered, imgmean, tpmtilesize, 3);
 
 		BufferedImage img = new BufferedImage(tpmwidth, tpmheight, BufferedImage.TYPE_3BYTE_BGR);
 		for (int y=0;y<tpmtiley;y++) {
@@ -240,17 +261,32 @@ public class TpmImage {
 		}
 		return m;
 	}
-	public static void matrixaddition(Matrix c, Matrix a, float b, int y) {
-		for (int j=0;j<y;j++) {
+	public static void matrixmean(Matrix c, Matrix a, int y, int s) {
+		for (int k=0;k<s;k++) {
 			for (int i=0;i<a.w;i++) {
-				c.set(j,i,a.get(j,i)+b);
+				float m = 0;
+				for (int j=y*k;j<(y*(k+1));j++) {
+					m += a.get(j,i);
+				}
+				c.set(k,i,m/(float)y);
 			}
 		}
 	}
-	public static void matrixsubtract(Matrix c, Matrix a, float b, int y) {
-		for (int j=0;j<y;j++) {
+	public static void matrixaddition(Matrix c, Matrix a, Matrix b, int y, int s) {
+		for (int k=0;k<s;k++) {
 			for (int i=0;i<a.w;i++) {
-				c.set(j,i,a.get(j,i)-b);
+				for (int j=y*k;j<(y*(k+1));j++) {
+					c.set(j,i,a.get(j,i)+b.get(k,i));
+				}
+			}
+		}
+	}
+	public static void matrixsubtract(Matrix c, Matrix a, Matrix b, int y, int s) {
+		for (int k=0;k<s;k++) {
+			for (int i=0;i<a.w;i++) {
+				for (int j=y*k;j<(y*(k+1));j++) {
+					c.set(j,i,a.get(j,i)-b.get(k,i));
+				}
 			}
 		}
 	}
