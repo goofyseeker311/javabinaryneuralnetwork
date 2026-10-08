@@ -1,5 +1,8 @@
 package fi.jkauppa.javabinaryneuralnetwork;
 
+import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -20,8 +23,10 @@ import javax.imageio.ImageIO;
 import javax.imageio.ImageWriteParam;
 import javax.imageio.ImageWriter;
 import javax.imageio.stream.FileImageOutputStream;
+import javax.swing.JFrame;
 
-public class TpmImage {
+public class TpmImage extends JFrame {
+	private static final long serialVersionUID = 1L;
 	public static final int tpmtiledim = 16;
 	public static final int tpmtilesize = tpmtiledim*tpmtiledim;
 	public static final int tpmtilergb = tpmtilesize*3;
@@ -42,7 +47,14 @@ public class TpmImage {
 	protected int tpmtiley = 0;
 	protected int tpmtilesmp = 0;
 	
-	public TpmImage() {}
+	private BufferedImage windowimg = null;
+	
+	public TpmImage() {
+		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		setSize(1280, 720);
+		setTitle("TpmImage");
+		setVisible(true);
+	}
 	
 	public void compressImage(BufferedImage img, int components) {
 		tpmcomps = components;
@@ -213,28 +225,43 @@ public class TpmImage {
 		}
 		return img;
 	}
+	
+	@Override public void paint(Graphics g) {
+		Graphics2D g2 = (Graphics2D)g;
+		g2.drawImage(getIconImage(), tpmtilex, tpmtiley, rootPane);
+		if (windowimg!=null) {
+			g2.drawImage(windowimg, 0, 0, this.getWidth(), this.getHeight(), null);
+		} else {
+			g2.setColor(Color.WHITE);
+			g2.fillRect(0, 0, this.getWidth(), this.getHeight());
+		}
+	}
 
 	public static void main(String[] args) {
 		System.out.println("init.");
+		TpmImage tpmimage = new TpmImage();
 		if (args.length<2) {
 			System.out.println("arguments expected: filein.jpg fileout.tpm [compress=1] [components=768]");
-			return;
-		}
-		String filein = args[0];
-		String fileout = args[1];
-		boolean compress = true;
-		int components = tpmtilergb;
-		if (args.length>=3) { compress = args[2].equals("1"); }
-		if (args.length>=4) { components = Integer.parseInt(args[3]);}
-		TpmImage tpmimage = new TpmImage();
-		if (compress) {
-			BufferedImage img = loadImage(filein);
-			tpmimage.compressImage(img, components);
-			tpmimage.writeImage(fileout);
 		} else {
-			tpmimage.readImage(filein);
-			BufferedImage img = tpmimage.extractImage(components);
-			saveImage(fileout, img, 1.0f);
+			String filein = args[0];
+			String fileout = args[1];
+			boolean compress = true;
+			int components = tpmtilergb;
+			if (args.length>=3) { compress = args[2].equals("1"); }
+			if (args.length>=4) { components = Integer.parseInt(args[3]);}
+			if (compress) {
+				BufferedImage img = loadImage(filein);
+				tpmimage.windowimg = img;
+				tpmimage.repaint();
+				tpmimage.compressImage(img, components);
+				tpmimage.writeImage(fileout);
+			} else {
+				tpmimage.readImage(filein);
+				BufferedImage img = tpmimage.extractImage(components);
+				tpmimage.windowimg = img;
+				tpmimage.repaint();
+				saveImage(fileout, img, 1.0f);
+			}
 		}
 		System.out.println("exit.");
 	}
