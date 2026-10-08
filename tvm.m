@@ -7,7 +7,7 @@ vid = VideoReader(filename);
 vframes = vid.NumberOfFrames;
 imgx = vid.Width;
 imgy = vid.Height;
-cframes = 8;
+cframes = 1;
 chunks = ceil(vframes/cframes);
 
 tiledim = 16;
@@ -37,6 +37,8 @@ for fc = 1:chunks
   chunkdata((fc-1)*tilesmp+(1:tilesmp),:) = chunkfull;
 endfor
 
+chunkmean = 128;
+chunkdata = chunkdata - chunkmean;
 
 svdcomps = swordslen;
 [u, s, v] = svd(chunkdata,'econ');
@@ -63,7 +65,6 @@ for fc = 1:cframes:vframes
     endfor
   endfor
 
-  chunkmean = 128;
   chunkcentered = chunkfull - chunkmean;
 
   bb = vinv * chunkcentered';

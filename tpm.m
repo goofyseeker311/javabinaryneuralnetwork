@@ -38,7 +38,7 @@ fopen(vinvfn,'w');
 fwrite(vinvfn,cast(vinv,'single')','single',0,'b');
 fclose(vinvfn);
 fopen(vinvfn);
-vinvb = cast(fread(vinvfn,[svdcomps Inf],'int8',0,'b'),'int8');
+vinvb = cast(fread(vinvfn,[svdcomps Inf],'single',0,'b'),'single')';
 fclose(vinvfn);
 printf("svdinv (%i,%i).\n",size(vv,2),size(vv,1));
 

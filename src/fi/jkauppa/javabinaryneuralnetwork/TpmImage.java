@@ -241,15 +241,15 @@ public class TpmImage {
 		return m;
 	}
 	public static void matrixaddition(Matrix c, Matrix a, float b, int y) {
-		for (int i=0;i<a.w;i++) {
-			for (int j=0;j<y;j++) {
+		for (int j=0;j<y;j++) {
+			for (int i=0;i<a.w;i++) {
 				c.set(j,i,a.get(j,i)+b);
 			}
 		}
 	}
 	public static void matrixsubtract(Matrix c, Matrix a, float b, int y) {
-		for (int i=0;i<a.w;i++) {
-			for (int j=0;j<y;j++) {
+		for (int j=0;j<y;j++) {
+			for (int i=0;i<a.w;i++) {
 				c.set(j,i,a.get(j,i)-b);
 			}
 		}
