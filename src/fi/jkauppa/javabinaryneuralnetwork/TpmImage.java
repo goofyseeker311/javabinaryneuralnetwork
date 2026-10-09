@@ -30,8 +30,8 @@ public class TpmImage extends JFrame {
 	public static final int tpmtiledim = 16;
 	public static final int tpmtilesize = tpmtiledim*tpmtiledim;
 	public static final int tpmtilergb = tpmtilesize*3;
-	private static final float[][] tpmencode = new float[tpmtilergb][tpmtilergb];
-	private static final float[][] tpmdecode = new float[tpmtilergb][tpmtilergb];
+	private static final Matrix tpmencode = new Matrix(tpmtilergb,tpmtilergb);
+	private static final Matrix tpmdecode = new Matrix(tpmtilergb,tpmtilergb);
 	static {
 		loadMatrix(tpmencode, "res/tpm/tpm.bin");
 		matrixtranspose(tpmdecode, tpmencode);
@@ -58,7 +58,7 @@ public class TpmImage extends JFrame {
 		tpmtilex = (int)Math.ceil((float)tpmwidth/(float)tpmtiledim);
 		tpmtiley = (int)Math.ceil((float)tpmheight/(float)tpmtiledim);
 		tpmtilesmp = tpmtilex*tpmtiley;
-		float[][] img2 = new float[tpmtilergb][tpmtilesmp];
+		Matrix img2 = new Matrix(tpmtilergb,tpmtilesmp);
 		for (int y=0;y<tpmtiley;y++) {
 			for (int x=0;x<tpmtilex;x++) {
 				for (int j=0;j<tpmtiledim;j++) {
@@ -71,9 +71,9 @@ public class TpmImage extends JFrame {
 						}
 						int svdy = i*tpmtiledim+j;
 						int svdx = y*tpmtilex+x;
-						img2[tpmtilesize*0+svdy][svdx] = (pixelcolor>>16) & 0xff;
-						img2[tpmtilesize*1+svdy][svdx] = (pixelcolor>>8) & 0xff;
-						img2[tpmtilesize*2+svdy][svdx] = pixelcolor & 0xff;
+						img2.set(tpmtilesize*0+svdy,svdx,(pixelcolor>>16) & 0xff);
+						img2.set(tpmtilesize*1+svdy,svdx,(pixelcolor>>8) & 0xff);
+						img2.set(tpmtilesize*2+svdy,svdx,pixelcolor & 0xff);
 					}
 				}
 			}
@@ -84,18 +84,18 @@ public class TpmImage extends JFrame {
 		for ( int i=0;i<tpmmean.length;i++) {
 			tpmmean[i] = (byte)((int)imgmean[i]);
 		}
-		float[][] imgcentered = new float[tpmtilergb][tpmtilesmp];
+		Matrix imgcentered = new Matrix(tpmtilergb,tpmtilesmp);
 		matrixsubtract(imgcentered, img2, imgmean, tpmtilesize, 3);
-		float[][] imgbb = new float[tpmcomps][tpmtilesmp];
+		Matrix imgbb = new Matrix(tpmcomps,tpmtilesmp);
 		matrixmultiply(imgbb, tpmencode, imgcentered, tpmtilesmp, tpmcomps);
 		tpmscale = 128 / Math.max(Math.abs(matrixmax(imgbb, tpmcomps)),Math.abs(matrixmin(imgbb, tpmcomps)));
-		float[][] imgbbs = new float[tpmcomps][tpmtilesmp];
+		Matrix imgbbs = new Matrix(tpmcomps,tpmtilesmp);
 		matrixscale(imgbbs, imgbb, tpmscale, tpmcomps);
 		
 		tpmdata = new byte[tpmcomps*tpmtilesmp];
 		for (int i=0;i<tpmtilesmp;i++) {
 			for (int j=0;j<tpmcomps;j++) {
-				tpmdata[i*tpmcomps+j] = (byte)imgbbs[j][i];
+				tpmdata[i*tpmcomps+j] = (byte)imgbbs.get(j,i);
 			}
 		}
 	}
@@ -180,13 +180,13 @@ public class TpmImage extends JFrame {
 		if (components<tpmcomponents) {
 			tpmcomponents = components;
 		}
-		float[][] imgbb = new float[tpmcomponents][tpmtilesmp];
+		Matrix imgbb = new Matrix(tpmcomponents,tpmtilesmp);
 		for (int i=0;i<tpmtilesmp;i++) {
 			for (int j=0;j<tpmcomponents;j++) {
-				imgbb[j][i] = (1.0f/tpmscale)*(float)tpmdata[i*tpmcomps+j];
+				imgbb.set(j,i,(1.0f/tpmscale)*(float)tpmdata[i*tpmcomps+j]);
 			}
 		}
-		float[][] imgcentered = new float[tpmtilergb][tpmtilesmp];
+		Matrix imgcentered = new Matrix(tpmtilergb,tpmtilesmp);
 		if (tpmcomponents>0) {
 			matrixmultiply(imgcentered, tpmdecode, imgbb, tpmtilesmp, tpmtilergb);
 		}
@@ -194,7 +194,7 @@ public class TpmImage extends JFrame {
 		for ( int i=0;i<tpmmean.length;i++) {
 			imgmean[i] = (float)(Byte.toUnsignedInt(tpmmean[i]));
 		}
-		float[][] img2 = new float[tpmtilergb][tpmtilesmp];
+		Matrix img2 = new Matrix(tpmtilergb,tpmtilesmp);
 		matrixaddition(img2, imgcentered, imgmean, tpmtilesize, 3);
 
 		BufferedImage img = new BufferedImage(tpmwidth, tpmheight, BufferedImage.TYPE_3BYTE_BGR);
@@ -206,9 +206,9 @@ public class TpmImage extends JFrame {
 						int pixelx = x*tpmtiledim+i;
 						int svdy = i*tpmtiledim+j;
 						int svdx = y*tpmtilex+x;
-						int pixelred = (int)(img2[tpmtilesize*0+svdy][svdx]);
-						int pixelgreen = (int)(img2[tpmtilesize*1+svdy][svdx]);
-						int pixelblue = (int)img2[tpmtilesize*2+svdy][svdx];
+						int pixelred = (int)(img2.get(tpmtilesize*0+svdy,svdx));
+						int pixelgreen = (int)(img2.get(tpmtilesize*1+svdy,svdx));
+						int pixelblue = (int)img2.get(tpmtilesize*2+svdy,svdx);
 						pixelred = (pixelred>255)?255:((pixelred<0)?0:pixelred);
 						pixelgreen = (pixelgreen>255)?255:((pixelgreen<0)?0:pixelgreen);
 						pixelblue = (pixelblue>255)?255:((pixelblue<0)?0:pixelblue);
@@ -277,79 +277,79 @@ public class TpmImage extends JFrame {
 		System.out.println("exit.");
 	}
 
-	public static float matrixmax(float[][] a, int y) {
+	public static float matrixmax(Matrix a, int y) {
 		float m = Float.NEGATIVE_INFINITY;
 		for (int j=0;j<y;j++) {
-			for (int i=0;i<a[0].length;i++) {
-				if (a[j][i]>m) {
-					m = a[j][i];
+			for (int i=0;i<a.w;i++) {
+				if (a.get(j,i)>m) {
+					m = a.get(j,i);
 				}
 			}
 		}
 		return m;
 	}
-	public static float matrixmin(float[][] a, int y) {
+	public static float matrixmin(Matrix a, int y) {
 		float m = Float.POSITIVE_INFINITY;
 		for (int j=0;j<y;j++) {
-			for (int i=0;i<a[0].length;i++) {
-				if (a[j][i]<m) {
-					m = a[j][i];
+			for (int i=0;i<a.w;i++) {
+				if (a.get(j,i)<m) {
+					m = a.get(j,i);
 				}
 			}
 		}
 		return m;
 	}
-	public static void matrixmean(float[] c, float[][] a, int y, int s) {
+	public static void matrixmean(float[] c, Matrix a, int y, int s) {
 		for (int k=0;k<s;k++) {
-			for (int i=0;i<a[0].length;i++) {
+			for (int i=0;i<a.w;i++) {
 				float m = 0;
 				for (int j=y*k;j<(y*(k+1));j++) {
-					m += a[j][i];
+					m += a.get(j,i);
 				}
-				c[a[0].length*k+i] = m / (float)y;
+				c[a.w*k+i] = m / (float)y;
 			}
 		}
 	}
-	public static void matrixaddition(float[][] c, float[][] a, float[] b, int y, int s) {
+	public static void matrixaddition(Matrix c, Matrix a, float[] b, int y, int s) {
 		for (int k=0;k<s;k++) {
-			for (int i=0;i<a[0].length;i++) {
+			for (int i=0;i<a.w;i++) {
 				for (int j=y*k;j<(y*(k+1));j++) {
-					c[j][i] = a[j][i] + b[a[0].length*k+i];
+					c.set(j,i,a.get(j,i)+b[a.w*k+i]);
 				}
 			}
 		}
 	}
-	public static void matrixsubtract(float[][] c, float[][] a, float[] b, int y, int s) {
+	public static void matrixsubtract(Matrix c, Matrix a, float[] b, int y, int s) {
 		for (int k=0;k<s;k++) {
-			for (int i=0;i<a[0].length;i++) {
+			for (int i=0;i<a.w;i++) {
 				for (int j=y*k;j<(y*(k+1));j++) {
-					c[j][i] = a[j][i] - b[a[0].length*k+i];
+					c.set(j,i,a.get(j,i)-b[a.w*k+i]);
 				}
 			}
 		}
 	}
-	public static void matrixscale(float[][] c, float[][] a, float b, int y) {
+	public static void matrixscale(Matrix c, Matrix a, float b, int y) {
 		for (int j=0;j<y;j++) {
-			for (int i=0;i<a[0].length;i++) {
-				c[j][i] = a[j][i] * b;
+			for (int i=0;i<a.w;i++) {
+				c.set(j,i,a.get(j,i)*b);
 			}
 		}
 	}
-	public static void matrixmultiply(float[][] c, float[][] a, float[][] b, int x, int y) {
+	public static void matrixmultiply(Matrix c, Matrix a, Matrix b, int x, int y) {
 		for (int j=0;j<y;j++) {
-			for (int i=0;i<b[0].length;i++) {
+			for (int i=0;i<b.w;i++) {
 				float m = 0;
-				for (int n=0;(n<x)&&(n<a[0].length)&&(n<b.length);n++) {
-					m += a[j][n] * b[n][i];
+				for (int n=0;(n<x)&&(n<a.w)&&(n<b.h);n++) {
+					m += a.get(j,n) * b.get(n,i);
 				}
-				c[j][i] = m;
+				c.set(j,i,m);
 			}
 		}
 	}
-	public static void matrixtranspose(float[][] c, float[][] a) {
-		for (int j=0;j<a.length;j++) {
-			for (int i=0;i<a[0].length;i++) {
-				c[j][i] = a[i][j];
+	public static void matrixtranspose(Matrix c, Matrix a) {
+		for (int j=0;j<a.h;j++) {
+			for (int i=0;i<a.w;i++) {
+				c.set(j,i,a.get(i,j));
 			}
 		}
 	}
@@ -376,13 +376,11 @@ public class TpmImage extends JFrame {
 		} catch (Exception e) {e.printStackTrace();}
 		return img;
 	}
-	public static void loadMatrix(float[][] matrix, String filename) {
+	public static void loadMatrix(Matrix matrix, String filename) {
 		byte[] tpmbin = loadBinary(filename, true);
 		ByteBuffer tpmbytes = ByteBuffer.wrap(tpmbin);
 		FloatBuffer tpmfloats = tpmbytes.asFloatBuffer();
-		for (int i=0;i<matrix.length;i++) {
-			tpmfloats.get(matrix[i], 0, matrix.length);
-		}
+		tpmfloats.get(matrix.v, 0, matrix.v.length);
 	}
 	public static String loadText(String filename, boolean loadresourcefromjar) {
 		return new String(loadBinary(filename, loadresourcefromjar));
@@ -419,10 +417,10 @@ public class TpmImage extends JFrame {
 			v = new float[ih*iw];
 		}
 		public float get(int y, int x) {
-			return v[y*w+x];
+			return v[x*h+y];
 		}
 		public void set(int y, int x, float d) {
-			v[y*w+x] = d;
+			v[x*h+y] = d;
 		}
 	}
 }
