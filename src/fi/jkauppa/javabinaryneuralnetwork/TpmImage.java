@@ -187,7 +187,9 @@ public class TpmImage extends JFrame {
 			}
 		}
 		float[][] imgcentered = new float[tpmtilergb][tpmtilesmp];
-		matrixmultiply(imgcentered, tpmdecode, imgbb, tpmtilesmp, tpmtilergb);
+		if (tpmcomponents>0) {
+			matrixmultiply(imgcentered, tpmdecode, imgbb, tpmtilesmp, tpmtilergb);
+		}
 		float[] imgmean = new float[tpmtilesmp*3];
 		for ( int i=0;i<tpmmean.length;i++) {
 			imgmean[i] = (float)(Byte.toUnsignedInt(tpmmean[i]));
@@ -256,7 +258,7 @@ public class TpmImage extends JFrame {
 		}
 		
 		if (args.length<2) {
-			System.out.println("arguments expected: filein.jpg fileout.tpm [compress=1] [components=768]");
+			System.out.println("arguments expected: filein.jpg fileout.tpm [compress=1] [components=768] [window=1]");
 		} else {
 			if (compress) {
 				BufferedImage img = loadImage(filein);
