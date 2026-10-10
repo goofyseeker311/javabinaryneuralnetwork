@@ -2,6 +2,20 @@ close all; clear; output_precision(16);
 
 pkg load video image;
 
+function intval = fptoint(fpval,bitn)
+  bits = 2^(bitn-2);
+  bitm = bits/log(2*bits);
+  intval = log(abs(fpval))*bitm+bits;
+  intval(intval<0) = 0;
+  intval = intval.*sign(fpval);
+endfunction
+
+function fpval = inttofp(intval,bitn)
+  bits = 2^(bitn-2);
+  bitm = bits/log(2*bits);
+  fpval = sign(intval).*exp((abs(intval)-bits)/bitm);
+endfunction
+
 filename = "video.mp4";
 vid = VideoReader(filename);
 vframes = vid.NumberOfFrames;
@@ -56,6 +70,7 @@ endfor
 mkdir output;
 vid = VideoReader(filename);
 
+bn = 6;
 for fc = 1:cframes:vframes
   chunkfull = zeros(tilesmp,swordslen);
   for k = 1:cframes
@@ -88,20 +103,20 @@ for fc = 1:cframes:vframes
   chunkcentered(:,chunkindex3) = chunkcentered3;
 
   bb = vinv * chunkcentered';
-  sc = 128 / max(abs([min(bb(:)) max(bb(:))]));
+  sc = (128/bn) / max(abs([min(bb(:)) max(bb(:))]));
   if (isinf(sc)) sc = 1; endif
-  bb = cast(bb * sc,'int8');
+  bb = cast(fptoint(bb * sc, bn),'int8');
   chunkmean = cast(chunkmean,'uint8');
 
   savefile = sprintf("output/video%i.mat",fc);
-  save("-binary", "-zip", savefile, "bb", "sc", "chunkmean", "swordslen", "svdcomps", "imgx", "imgy", "tiledim", "tilesize", "tilergb", "tilex", "tiley", "tilesmp");
+  save("-binary", "-zip", savefile, "bb", "sc", "bn", "chunkmean", "swordslen", "svdcomps", "imgx", "imgy", "tiledim", "tilesize", "tilergb", "tilex", "tiley", "tilesmp");
 endfor
 
 
 clear bb sc;
 load "output/video1.mat";
 chunkmean = cast(chunkmean,'double');
-bb = cast(bb,'double') / sc;
+bb = inttofp(cast(bb,'double'), bn) / sc;
 aa = (vv * bb)';
 aa1 = aa(:,chunkindex1) + chunkmean(:,1);
 aa2 = aa(:,chunkindex2) + chunkmean(:,2);
