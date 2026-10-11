@@ -2,10 +2,17 @@
 #include <conio.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <tgi.h>
 
-unsigned char* SCREEN_RAM = (unsigned char*)0x400;
-int i=0;
+const unsigned char tgipalette[2] = {TGI_COLOR_BLACK, TGI_COLOR_LIGHTBLUE};
+
+#define SCREENWIDTH 40
+#define SCREENHEIGHT 25
+#define SCREENSIZE 1000
+
+unsigned char* SCREEN_RAM = (unsigned char*)0x0400;
+unsigned char* BITMAP_RAM = (unsigned char*)0x2000;
 
 void main(void)
 {
@@ -18,27 +25,46 @@ void main(void)
 
 	tgi_install(tgi_static_stddrv);
 	tgi_init();
+	tgi_setpalette(tgipalette);
 	tgi_clear();
+	tgi_setcolor(1);
 	tgi_circle(160,100,20);
 	cgetc();
 	tgi_done();
 
 	VIC.ctrl1 = (VIC.ctrl1&0b10011111)|0b00100000;
 	VIC.ctrl2 = (VIC.ctrl2&0b11101111)|0b00000000;
-	for (i=0;i<40*25;i++) {
-		SCREEN_RAM[i] = 0;
-		COLOR_RAM[i] = 0;
-	}
+	VIC.addr = 0b00011000;
+	memset(BITMAP_RAM, 0, SCREENSIZE*8);
+	memset(SCREEN_RAM, 0, SCREENSIZE);
+	SCREEN_RAM[0] = (COLOR_LIGHTBLUE<<4) | COLOR_WHITE;
+	SCREEN_RAM[1] = (COLOR_LIGHTBLUE<<4) | COLOR_WHITE;
+	SCREEN_RAM[2] = (COLOR_LIGHTBLUE<<4) | COLOR_WHITE;
+	SCREEN_RAM[3] = (COLOR_LIGHTBLUE<<4) | COLOR_WHITE;
+	SCREEN_RAM[4] = (COLOR_LIGHTBLUE<<4) | COLOR_WHITE;
+	SCREEN_RAM[5] = (COLOR_LIGHTBLUE<<4) | COLOR_WHITE;
+	SCREEN_RAM[6] = (COLOR_LIGHTBLUE<<4) | COLOR_WHITE;
+	SCREEN_RAM[7] = (COLOR_LIGHTBLUE<<4) | COLOR_WHITE;
+	BITMAP_RAM[0] = 0xFF;
+	BITMAP_RAM[1] = 0xAA;
+	BITMAP_RAM[2] = 0xFF;
+	BITMAP_RAM[3] = 0xAA;
+	BITMAP_RAM[4] = 0xAA;
+	BITMAP_RAM[5] = 0xFF;
+	BITMAP_RAM[6] = 0xAA;
+	BITMAP_RAM[7] = 0xFF;
 	cgetc();
 
 	VIC.ctrl1 = (VIC.ctrl1&0b10011111)|0b00000000;
 	VIC.ctrl2 = (VIC.ctrl2&0b11101111)|0b00000000;
-	for (i=0;i<40*25;i++) {
-		SCREEN_RAM[i] = 96;
-		COLOR_RAM[i] = (COLOR_LIGHTBLUE<<4) | COLOR_WHITE;
-	}
-	SCREEN_RAM[10*40+20] = 91;
+	VIC.addr = 0b00010100;
+	memset(SCREEN_RAM, 96, SCREENSIZE);
+	memset(COLOR_RAM, COLOR_WHITE, SCREENSIZE);
+	SCREEN_RAM[10*SCREENWIDTH+20] = 91;
 	textcolor(COLOR_RED);
-	cputcxy(30, 20, 'A');
+	cputcxy(30, 20, 'a');
 	cgetc();
+
+	clrscr();
+	printf("End.\n");
 }
