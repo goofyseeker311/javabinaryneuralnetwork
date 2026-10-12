@@ -1,4 +1,5 @@
 #include <c64.h>
+#include <cbm.h>
 #include <conio.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -28,10 +29,24 @@ const unsigned char tgipalette[2] = {TGI_COLOR_BLACK, TGI_COLOR_LIGHTBLUE};
 #define RAYTABLE ((vec*)0x5000)
 
 int i=0, j=0;
+unsigned int k=0;
 ray player = {0};
 ray screenray = {0};
 
+unsigned int loadfile(const char* filename, unsigned memory) {
+	cbm_k_setlfs(1, 8, 0);
+	cbm_k_setnam(filename);
+	cbm_k_open();
+	return cbm_k_load(0, memory);
+}
+
 void main(void) {
+	bzero(TILEDROOM, TILEDSIZE);
+	bzero(RAYTABLE, RAYSIZE*4);
+	k = loadfile("tiledata", (unsigned)RAYTABLE);
+	printf("lf: %u: %i, %i, %i, %i\n",k,RAYTABLE[0].x,RAYTABLE[0].y,RAYTABLE[1].x,RAYTABLE[1].y);
+	cgetc();
+
 	bgcolor(COLOR_ORANGE);
 	bordercolor(COLOR_CYAN);
 	textcolor(COLOR_GREEN);
@@ -47,9 +62,6 @@ void main(void) {
 	tgi_circle(160,100,20);
 	cgetc();
 	tgi_done();
-
-	memset(TILEDROOM, 1, TILEDSIZE);
-	memset(RAYTABLE, 2, RAYSIZE*4);
 
 	VIC.ctrl1 = (VIC.ctrl1&0b10011111)|0b00100000;
 	VIC.ctrl2 = (VIC.ctrl2&0b11101111)|0b00000000;
