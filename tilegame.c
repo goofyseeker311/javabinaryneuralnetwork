@@ -30,6 +30,7 @@ const unsigned char tgipalette[2] = {TGI_COLOR_BLACK, TGI_COLOR_LIGHTBLUE};
 
 int i=0, j=0;
 unsigned int k=0;
+unsigned char l=0;
 ray player = {0};
 ray screenray = {0};
 
@@ -44,7 +45,8 @@ void main(void) {
 	bzero(TILEDROOM, TILEDSIZE);
 	bzero(RAYTABLE, RAYSIZE*4);
 	k = loadfile("tiledata", (unsigned)RAYTABLE);
-	printf("lf: %u: %i, %i, %i, %i\n",k,RAYTABLE[0].x,RAYTABLE[0].y,RAYTABLE[1].x,RAYTABLE[1].y);
+	l = cbm_k_readst();
+	printf("lf: %u - %u: %i, %i, %i, %i\n",l,k,RAYTABLE[0].x,RAYTABLE[0].y,RAYTABLE[1].x,RAYTABLE[1].y);
 	cgetc();
 
 	bgcolor(COLOR_ORANGE);
