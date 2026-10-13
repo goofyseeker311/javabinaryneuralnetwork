@@ -27,8 +27,8 @@ const unsigned char tgipalette[2] = {TGI_COLOR_BLACK, TGI_COLOR_LIGHTBLUE};
 #define TILEDSIZE 4096
 #define RAYSIZE 512
 #define FPS 8
-#define SCREEN_RAM ((unsigned char*)0x0400)
-#define BITMAP_RAM ((unsigned char*)0x2000)
+#define SCREEN_RAM ((unsigned char*)0x8400)
+#define BITMAP_RAM ((unsigned char*)0xA000)
 #define TILEDROOM ((unsigned char*)0x4000)
 #define TILEDSDF ((unsigned char*)0x5000)
 #define RAYTABLE ((vec*)0x6000)
@@ -60,6 +60,40 @@ void main(void) {
 	k = loadfile("tiledata", (unsigned)RAYTABLE);
 	l = cbm_k_readst();
 	printf("lf2: %u - %u: %i, %i, %i, %i\n",l,k,RAYTABLE[0].x,RAYTABLE[0].y,RAYTABLE[1].x,RAYTABLE[1].y);
+	for (l=0;l<SCREENWIDTH;l++) {
+		screenray.pos.x = player.loc.pos.x;
+		screenray.pos.y = player.loc.pos.y;
+		screenray.dir.x = RAYTABLE[player.ang+l].x;
+		screenray.dir.y = RAYTABLE[player.ang+l].y;
+		f = false;
+		m = 0;
+		n = 0;
+		o = 0;
+		if ((screenray.dir.x!=0)||(screenray.dir.y!=0)) {
+			while (!f) {
+				x = screenray.pos.x>>FPS;
+				y = screenray.pos.y>>FPS;
+				if ((x<0)||(x>=TILEDDIM)||(y<0)||(y>=TILEDDIM)) {
+					f = true;
+					m = 255;
+				} else {
+					i = (y<<6)+x;
+					m = TILEDROOM[i];
+					n = TILEDSDF[i];
+					if (m==0) {
+						screenray.pos.x += screenray.dir.x;
+						screenray.pos.y += screenray.dir.y;
+						o++;
+					} else {
+						f = true;
+					}
+				}
+			}
+		}
+		if (f) {
+			printf("%d,",o);
+		}
+	}
 	cgetc();
 
 	bgcolor(COLOR_ORANGE);
@@ -78,6 +112,7 @@ void main(void) {
 	cgetc();
 	tgi_done();
 
+	CIA2.pra = (CIA2.pra&0b11111100)|0b01;
 	VIC.ctrl1 = (VIC.ctrl1&0b10011111)|0b00100000;
 	VIC.ctrl2 = (VIC.ctrl2&0b11101111)|0b00000000;
 	VIC.addr = 0b00011000;
@@ -99,57 +134,6 @@ void main(void) {
 	BITMAP_RAM[5] = 0xFF;
 	BITMAP_RAM[6] = 0xAA;
 	BITMAP_RAM[7] = 0xFF;
-	for (l=0;l<SCREENWIDTH;l++) {
-		screenray.pos.x = player.loc.pos.x;
-		screenray.pos.y = player.loc.pos.y;
-		screenray.dir.x = RAYTABLE[player.ang+l].x;
-		screenray.dir.y = RAYTABLE[player.ang+l].y;
-		z = 40*24+l;
-		w = (40*24+l)<<3;
-		f = false;
-		m = 0;
-		n = 0;
-		o = 0;
-		SCREEN_RAM[z] = (COLOR_LIGHTRED<<4) | COLOR_WHITE;
-		BITMAP_RAM[w] = 0xFF;
-		if ((screenray.dir.x!=0)||(screenray.dir.y!=0)) {
-			SCREEN_RAM[z-40] = (COLOR_LIGHTGREEN<<4) | COLOR_WHITE;
-			BITMAP_RAM[w-320] = 0xFF;
-			while (!f) {
-				SCREEN_RAM[z-80] = (COLOR_LIGHTBLUE<<4) | COLOR_WHITE;
-				BITMAP_RAM[w-640] = 0xFF;
-				x = screenray.pos.x>>FPS;
-				y = screenray.pos.y>>FPS;
-				if ((x<0)||(x>=TILEDDIM)||(y<0)||(y>=TILEDDIM)) {
-					f = true;
-					m = 255;
-					SCREEN_RAM[z-120] = (COLOR_CYAN<<4) | COLOR_RED;
-					BITMAP_RAM[w-960] = 0xFF;
-				} else {
-					SCREEN_RAM[z-120] = (COLOR_CYAN<<4) | COLOR_GREEN;
-					BITMAP_RAM[w-960] = 0xFF;
-					i = (y<<6)+x;
-					m = TILEDROOM[i];
-					n = TILEDSDF[i];
-					if (m==0) {
-						SCREEN_RAM[z-160] = (COLOR_CYAN<<4) | COLOR_BLUE;
-						BITMAP_RAM[w-1280] = 0xFF;
-						screenray.pos.x += screenray.dir.x;
-						screenray.pos.y += screenray.dir.y;
-						o++;
-					} else {
-						SCREEN_RAM[z-200] = (COLOR_CYAN<<4) | COLOR_WHITE;
-						BITMAP_RAM[w-1600] = 0xFF;
-						f = true;
-					}
-				}
-			}
-		}
-		if (f) {
-			SCREEN_RAM[z-240] = (COLOR_PURPLE<<4) | o;
-			BITMAP_RAM[w-1920] = 0xFF;
-		}
-	}
 	cgetc();
 
 	VIC.ctrl1 = (VIC.ctrl1&0b10011111)|0b00000000;
@@ -163,7 +147,13 @@ void main(void) {
 	SCREEN_RAM[20*SCREENWIDTH+30] = 1;
 	cgetc();
 
-	clrscr();
+	CIA2.pra = (CIA2.pra&0b11111100)|0b11;
+	VIC.addr = 0b00010110;
+	tgi_init();
+	tgi_setpalette(tgipalette);
+	cgetc();
+	tgi_done();
+
 	bgcolor(COLOR_BLUE);
 	bordercolor(COLOR_LIGHTBLUE);
 	textcolor(COLOR_LIGHTBLUE);
