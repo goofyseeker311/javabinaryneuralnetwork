@@ -39,7 +39,7 @@ swordscentered = [swordscentered1 swordscentered2 swordscentered3];
 printf("swords (%i,%i).\n",size(swordsfull,1),swordslen);
 
 svdcomps = swordslen;
-[u, s, v] = svd(swordsfull-128,'econ');
+[u, s, v] = svd(swordscentered,'econ');
 vv = v(:,1:svdcomps);
 vinv = (eye(swordslen)/vv')';
 vinvfn = "tpm.bin";
@@ -52,9 +52,9 @@ fclose(vinvfn);
 printf("svdinv (%i,%i).\n",size(vv,2),size(vv,1));
 
 bb = vinv * swordscentered';
-sc = 512 / max(abs([min(bb(:)) max(bb(:))]));
+sc = 128 / max(abs([min(bb(:)) max(bb(:))]));
 if (isinf(sc)) sc = 1; endif
-bb = cast(bb * sc,'int16');
+bb = cast(bb * sc,'int8');
 swordsmean = cast(swordsmean,'uint8');
 save -binary -zip image.mat bb sc swordsmean swordslen svdcomps tilex tiley tiledim imgx imgy;
 

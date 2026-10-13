@@ -19,6 +19,15 @@ tilesmp = tilex*tiley;
 swordslen = tilergb*cframes;
 chunkdata = zeros(tilesmp*chunks,swordslen,'uint8');
 
+chunkindex1 = [];
+chunkindex2 = [];
+chunkindex3 = [];
+for k = 1:cframes
+  chunkindex1 = [chunkindex1 ((k-1)*3+0)*tilesize+(1:tilesize)];
+  chunkindex2 = [chunkindex2 ((k-1)*3+1)*tilesize+(1:tilesize)];
+  chunkindex3 = [chunkindex3 ((k-1)*3+2)*tilesize+(1:tilesize)];
+endfor
+
 for fc = 1:chunks
   chunkfull = zeros(tilesmp,swordslen);
   for k = 1:cframes
@@ -34,24 +43,29 @@ for fc = 1:chunks
       endfor
     endfor
   endfor
-  chunkdata((fc-1)*tilesmp+(1:tilesmp),:) = chunkfull;
+  chunkfull1 = chunkfull(:,chunkindex1);
+  chunkfull2 = chunkfull(:,chunkindex2);
+  chunkfull3 = chunkfull(:,chunkindex3);
+  chunkmean1 = mean(chunkfull1,2);
+  chunkmean2 = mean(chunkfull2,2);
+  chunkmean3 = mean(chunkfull3,2);
+  chunkmean = [chunkmean1 chunkmean2 chunkmean3];
+  chunkcentered1 = chunkfull1 - chunkmean1;
+  chunkcentered2 = chunkfull2 - chunkmean2;
+  chunkcentered3 = chunkfull3 - chunkmean3;
+  chunkcentered = [];
+  chunkcentered(:,chunkindex1) = chunkcentered1;
+  chunkcentered(:,chunkindex2) = chunkcentered2;
+  chunkcentered(:,chunkindex3) = chunkcentered3;
+  chunkdata((fc-1)*tilesmp+(1:tilesmp),:) = chunkcentered;
 endfor
 
 
 svdcomps = swordslen;
-[u, s, v] = svd(chunkdata-128,'econ');
+[u, s, v] = svd(chunkdata,'econ');
 vv = v(:,1:svdcomps);
 vinv = (eye(swordslen)/vv')';
 
-
-chunkindex1 = [];
-chunkindex2 = [];
-chunkindex3 = [];
-for k = 1:cframes
-  chunkindex1 = [chunkindex1 ((k-1)*3+0)*tilesize+(1:tilesize)];
-  chunkindex2 = [chunkindex2 ((k-1)*3+1)*tilesize+(1:tilesize)];
-  chunkindex3 = [chunkindex3 ((k-1)*3+2)*tilesize+(1:tilesize)];
-endfor
 
 mkdir output;
 vid = VideoReader(filename);
@@ -88,9 +102,9 @@ for fc = 1:cframes:vframes
   chunkcentered(:,chunkindex3) = chunkcentered3;
 
   bb = vinv * chunkcentered';
-  sc = 512 / max(abs([min(bb(:)) max(bb(:))]));
+  sc = 128 / max(abs([min(bb(:)) max(bb(:))]));
   if (isinf(sc)) sc = 1; endif
-  bb = cast(bb * sc,'int16');
+  bb = cast(bb * sc,'int8');
   chunkmean = cast(chunkmean,'uint8');
 
   savefile = sprintf("output/video%i.mat",fc);
