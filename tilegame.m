@@ -87,7 +87,7 @@ tiledroom(tiledroom<0) = 0;
 fn = "tiledroom.prg";
 fopen(fn,'w');
 fwrite(fn,cast(0x4000,'uint16'),'uint16',0,'l');
-fwrite(fn,cast(tiledroom,'int16'),'int16',0,'l');
+fwrite(fn,cast(tiledroom,'uint8'),'uint8',0,'l');
 fclose(fn);
 
 tiledsdf = inf(tileddim,tileddim);
@@ -110,6 +110,6 @@ tiledsdf = floor(tiledsdf);
 fn = "tiledsdf.prg";
 fopen(fn,'w');
 fwrite(fn,cast(0x5000,'uint16'),'uint16',0,'l');
-fwrite(fn,cast(tiledsdf,'int16'),'int16',0,'l');
+fwrite(fn,cast(tiledsdf,'uint8'),'uint8',0,'l');
 fclose(fn);
 

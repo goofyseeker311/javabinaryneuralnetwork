@@ -26,11 +26,13 @@ const unsigned char tgipalette[2] = {TGI_COLOR_BLACK, TGI_COLOR_LIGHTBLUE};
 #define SCREEN_RAM ((unsigned char*)0x0400)
 #define BITMAP_RAM ((unsigned char*)0x2000)
 #define TILEDROOM ((unsigned char*)0x4000)
-#define RAYTABLE ((vec*)0x5000)
+#define TILEDSDF ((unsigned char*)0x5000)
+#define RAYTABLE ((vec*)0x6000)
 
 int i=0, j=0;
 unsigned int k=0;
 unsigned char l=0;
+
 ray player = {0};
 ray screenray = {0};
 
@@ -43,10 +45,17 @@ unsigned int loadfile(const char* filename, unsigned memory) {
 
 void main(void) {
 	bzero(TILEDROOM, TILEDSIZE);
+	bzero(TILEDSDF, TILEDSIZE);
 	bzero(RAYTABLE, RAYSIZE*4);
+	k = loadfile("tiledroom", (unsigned)TILEDROOM);
+	l = cbm_k_readst();
+	printf("lf0: %u - %u: %i, %i, %i, %i\n",l,k,TILEDROOM[0],TILEDROOM[1],TILEDROOM[2],TILEDROOM[3]);
+	k = loadfile("tiledsdf", (unsigned)TILEDSDF);
+	l = cbm_k_readst();
+	printf("lf1: %u - %u: %i, %i, %i, %i\n",l,k,TILEDSDF[0],TILEDSDF[1],TILEDSDF[2],TILEDSDF[3]);
 	k = loadfile("tiledata", (unsigned)RAYTABLE);
 	l = cbm_k_readst();
-	printf("lf: %u - %u: %i, %i, %i, %i\n",l,k,RAYTABLE[0].x,RAYTABLE[0].y,RAYTABLE[1].x,RAYTABLE[1].y);
+	printf("lf2: %u - %u: %i, %i, %i, %i\n",l,k,RAYTABLE[0].x,RAYTABLE[0].y,RAYTABLE[1].x,RAYTABLE[1].y);
 	cgetc();
 
 	bgcolor(COLOR_ORANGE);
@@ -90,7 +99,7 @@ void main(void) {
 		screenray.pos.x = player.pos.x;
 		screenray.pos.y = player.pos.y;
 		screenray.dir.x = RAYTABLE[i].x;
-		screenray.dir.y = RAYTABLE[i+1].x;
+		screenray.dir.y = RAYTABLE[i].y;
 	}
 	cgetc();
 
@@ -101,8 +110,8 @@ void main(void) {
 	memset(COLOR_RAM, COLOR_WHITE, SCREENSIZE);
 	COLOR_RAM[10*SCREENWIDTH+20] = COLOR_YELLOW;
 	SCREEN_RAM[10*SCREENWIDTH+20] = 91;
-	textcolor(COLOR_RED);
-	cputcxy(30, 20, 'a');
+	COLOR_RAM[20*SCREENWIDTH+30] = COLOR_RED;
+	SCREEN_RAM[20*SCREENWIDTH+30] = 1;
 	cgetc();
 
 	clrscr();
