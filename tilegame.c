@@ -1,6 +1,7 @@
 #include <c64.h>
 #include <cbm.h>
 #include <conio.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -9,10 +10,13 @@
 typedef struct {
 	int x, y;
 } vec;
-
 typedef struct {
 	vec pos, dir;
 } ray;
+typedef struct {
+	ray loc;
+	char ang;
+} ent;
 
 const unsigned char tgipalette[2] = {TGI_COLOR_BLACK, TGI_COLOR_LIGHTBLUE};
 
@@ -29,17 +33,17 @@ const unsigned char tgipalette[2] = {TGI_COLOR_BLACK, TGI_COLOR_LIGHTBLUE};
 #define TILEDSDF ((unsigned char*)0x5000)
 #define RAYTABLE ((vec*)0x6000)
 
-int i=0, j=0;
-unsigned int k=0;
-unsigned char l=0;
+bool f=false;
+int i=0, j=0, x=0, y=0, z=0, w=0;
+unsigned int k=0, a=0, b=0, c=0, d=0;
+unsigned char l=0, m=0, n=0, o=0, p=0;
 
-ray player = {0};
+ent player = {2<<FPS,3<<FPS,0<<FPS,1<<FPS,0};
 ray screenray = {0};
 
 unsigned int loadfile(const char* filename, unsigned memory) {
 	cbm_k_setlfs(1, 8, 0);
 	cbm_k_setnam(filename);
-	cbm_k_open();
 	return cbm_k_load(0, memory);
 }
 
@@ -77,8 +81,8 @@ void main(void) {
 	VIC.ctrl1 = (VIC.ctrl1&0b10011111)|0b00100000;
 	VIC.ctrl2 = (VIC.ctrl2&0b11101111)|0b00000000;
 	VIC.addr = 0b00011000;
-	memset(BITMAP_RAM, 0, SCREENSIZE*8);
-	memset(SCREEN_RAM, 0, SCREENSIZE);
+	bzero(BITMAP_RAM, SCREENSIZE*8);
+	bzero(SCREEN_RAM, SCREENSIZE);
 	SCREEN_RAM[0] = (COLOR_LIGHTBLUE<<4) | COLOR_WHITE;
 	SCREEN_RAM[1] = (COLOR_LIGHTBLUE<<4) | COLOR_WHITE;
 	SCREEN_RAM[2] = (COLOR_LIGHTBLUE<<4) | COLOR_WHITE;
@@ -95,11 +99,56 @@ void main(void) {
 	BITMAP_RAM[5] = 0xFF;
 	BITMAP_RAM[6] = 0xAA;
 	BITMAP_RAM[7] = 0xFF;
-	for (i=0;i<RAYSIZE;i+=2) {
-		screenray.pos.x = player.pos.x;
-		screenray.pos.y = player.pos.y;
-		screenray.dir.x = RAYTABLE[i].x;
-		screenray.dir.y = RAYTABLE[i].y;
+	for (l=0;l<SCREENWIDTH;l++) {
+		screenray.pos.x = player.loc.pos.x;
+		screenray.pos.y = player.loc.pos.y;
+		screenray.dir.x = RAYTABLE[player.ang+l].x;
+		screenray.dir.y = RAYTABLE[player.ang+l].y;
+		z = 40*24+l;
+		w = (40*24+l)<<3;
+		f = false;
+		m = 0;
+		n = 0;
+		o = 0;
+		SCREEN_RAM[z] = (COLOR_LIGHTRED<<4) | COLOR_WHITE;
+		BITMAP_RAM[w] = 0xFF;
+		if ((screenray.dir.x!=0)||(screenray.dir.y!=0)) {
+			SCREEN_RAM[z-40] = (COLOR_LIGHTGREEN<<4) | COLOR_WHITE;
+			BITMAP_RAM[w-320] = 0xFF;
+			while (!f) {
+				SCREEN_RAM[z-80] = (COLOR_LIGHTBLUE<<4) | COLOR_WHITE;
+				BITMAP_RAM[w-640] = 0xFF;
+				x = screenray.pos.x>>FPS;
+				y = screenray.pos.y>>FPS;
+				if ((x<0)||(x>=TILEDDIM)||(y<0)||(y>=TILEDDIM)) {
+					f = true;
+					m = 255;
+					SCREEN_RAM[z-120] = (COLOR_CYAN<<4) | COLOR_RED;
+					BITMAP_RAM[w-960] = 0xFF;
+				} else {
+					SCREEN_RAM[z-120] = (COLOR_CYAN<<4) | COLOR_GREEN;
+					BITMAP_RAM[w-960] = 0xFF;
+					i = (y<<6)+x;
+					m = TILEDROOM[i];
+					n = TILEDSDF[i];
+					if (m==0) {
+						SCREEN_RAM[z-160] = (COLOR_CYAN<<4) | COLOR_BLUE;
+						BITMAP_RAM[w-1280] = 0xFF;
+						screenray.pos.x += screenray.dir.x;
+						screenray.pos.y += screenray.dir.y;
+						o++;
+					} else {
+						SCREEN_RAM[z-200] = (COLOR_CYAN<<4) | COLOR_WHITE;
+						BITMAP_RAM[w-1600] = 0xFF;
+						f = true;
+					}
+				}
+			}
+		}
+		if (f) {
+			SCREEN_RAM[z-240] = (COLOR_PURPLE<<4) | o;
+			BITMAP_RAM[w-1920] = 0xFF;
+		}
 	}
 	cgetc();
 
