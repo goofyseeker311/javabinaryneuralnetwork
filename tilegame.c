@@ -15,7 +15,7 @@ typedef struct {
 } ray;
 typedef struct {
 	ray loc;
-	char ang;
+	int ang;
 } ent;
 
 const unsigned char tgipalette[2] = {TGI_COLOR_BLACK, TGI_COLOR_LIGHTBLUE};
@@ -25,6 +25,7 @@ const unsigned char tgipalette[2] = {TGI_COLOR_BLACK, TGI_COLOR_LIGHTBLUE};
 #define SCREENSIZE 1000
 #define TILEDDIM 64
 #define TILEDSIZE 4096
+#define RAYCOUNT 256
 #define RAYSIZE 512
 #define FPS 8
 #define SCREEN_RAM ((unsigned char*)0x8400)
@@ -60,15 +61,15 @@ void main(void) {
 	k = loadfile("tiledata", (unsigned)RAYTABLE);
 	l = cbm_k_readst();
 	printf("lf2: %u - %u: %i, %i, %i, %i\n",l,k,RAYTABLE[0].x,RAYTABLE[0].y,RAYTABLE[1].x,RAYTABLE[1].y);
-	for (l=0;l<SCREENWIDTH;l++) {
+	for (j=0;j<RAYCOUNT;j++) {
 		screenray.pos.x = player.loc.pos.x;
 		screenray.pos.y = player.loc.pos.y;
-		screenray.dir.x = RAYTABLE[player.ang+l].x;
-		screenray.dir.y = RAYTABLE[player.ang+l].y;
+		screenray.dir.x = RAYTABLE[player.ang+j].x;
+		screenray.dir.y = RAYTABLE[player.ang+j].y;
 		f = false;
 		m = 0;
 		n = 0;
-		o = 0;
+		z = 0;
 		if ((screenray.dir.x!=0)||(screenray.dir.y!=0)) {
 			while (!f) {
 				x = screenray.pos.x>>FPS;
@@ -76,22 +77,21 @@ void main(void) {
 				if ((x<0)||(x>=TILEDDIM)||(y<0)||(y>=TILEDDIM)) {
 					f = true;
 					m = 255;
+					printf("%d,",z);
 				} else {
 					i = (y<<6)+x;
 					m = TILEDROOM[i];
 					n = TILEDSDF[i];
 					if (m==0) {
-						screenray.pos.x += screenray.dir.x;
-						screenray.pos.y += screenray.dir.y;
-						o++;
+						screenray.pos.x += screenray.dir.x<<n;
+						screenray.pos.y += screenray.dir.y<<n;
+						z++;
 					} else {
 						f = true;
+						printf("%d,",z);
 					}
 				}
 			}
-		}
-		if (f) {
-			printf("%d,",o);
 		}
 	}
 	cgetc();

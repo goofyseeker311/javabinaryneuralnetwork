@@ -105,7 +105,9 @@ for j = 1:tileddim
     endfor
   endfor
 endfor
-tiledsdf = floor(tiledsdf);
+tiledsdf = floor(log2(tiledsdf));
+tiledsdf(tiledsdf<0) = 0;
+tiledsdf(tiledsdf>6) = 6;
 
 fn = "tiledsdf.prg";
 fopen(fn,'w');
