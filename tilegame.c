@@ -6,7 +6,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <tgi.h>
-#include <time.h>
 
 typedef struct {
 	int x, y;
@@ -29,6 +28,7 @@ const unsigned char tgipalette[2] = {TGI_COLOR_BLACK, TGI_COLOR_LIGHTBLUE};
 #define RAYCOUNT 256
 #define RAYSIZE 512
 #define FPS 8
+#define JIFFY_CLOCK ((unsigned char*)0x00A0)
 #define SCREEN_RAM ((unsigned char*)0x8400)
 #define BITMAP_RAM ((unsigned char*)0xA000)
 #define TILEDROOM ((unsigned char*)0x4000)
@@ -40,10 +40,14 @@ int i=0, j=0, a=0, b=0, c=0, d=0;
 char x=0, y=0, z=0, w=0;
 unsigned int k=0;
 unsigned char l=0, m=0, n=0, o=0, p=0;
-struct timespec time1, time2, timedif, timeres;
+unsigned long time1, time2, timedif;
 
 ent player = {2<<FPS,3<<FPS,0<<FPS,1<<FPS,0};
 ray screenray = {0};
+
+unsigned long gettime() {
+	return (((long)JIFFY_CLOCK[2])<<16) | (JIFFY_CLOCK[1]<<8) | JIFFY_CLOCK[0];
+}
 
 unsigned int loadfile(const char* filename, unsigned memory) {
 	cbm_k_setlfs(1, 8, 0);
@@ -64,42 +68,39 @@ void main(void) {
 	k = loadfile("tiledata", (unsigned)RAYTABLE);
 	l = cbm_k_readst();
 	printf("lf2: %u - %u: %i, %i, %i, %i\n",l,k,RAYTABLE[0].x,RAYTABLE[0].y,RAYTABLE[1].x,RAYTABLE[1].y);
-	clock_gettime(CLOCK_REALTIME, &time1);
-	for (w=0;w<100;w++) {
-		for (l=0;l<SCREENWIDTH;l++) {
-			screenray.pos = player.loc.pos;
-			screenray.dir = RAYTABLE[player.ang+l];
-			f = false;
-			o = 0;
-			//if ((screenray.dir.x!=0)||(screenray.dir.y!=0)) {
-				while (!f) {
-					x = screenray.pos.x>>FPS;
-					y = screenray.pos.y>>FPS;
-					if (((x&0b11100000)==0)&&((y&0b11100000)==0)) {
-						i = (y<<6)+x;
-						m = TILEDROOM[i];
-						if (m==0) {
-							n = TILEDSDF[i];
-							screenray.pos.x += screenray.dir.x<<n;
-							screenray.pos.y += screenray.dir.y<<n;
-							o++;
-						} else {
-							f = true;
-							//printf("%u,",o);
-						}
+	time1 = gettime();
+	for (l=0;l<SCREENWIDTH;l++) {
+		screenray.pos = player.loc.pos;
+		screenray.dir = RAYTABLE[player.ang+l];
+		f = false;
+		o = 0;
+		if ((screenray.dir.x!=0)||(screenray.dir.y!=0)) {
+			while (!f) {
+				x = screenray.pos.x>>FPS;
+				y = screenray.pos.y>>FPS;
+				if (((x&0b11100000)==0)&&((y&0b11100000)==0)) {
+					i = (y<<6)+x;
+					m = TILEDROOM[i];
+					if (m==0) {
+						n = TILEDSDF[i];
+						screenray.pos.x += screenray.dir.x<<n;
+						screenray.pos.y += screenray.dir.y<<n;
+						o++;
 					} else {
 						f = true;
-						m = 255;
-						//printf("%d,",o);
+						//printf("%u,",o);
 					}
+				} else {
+					f = true;
+					m = 255;
+					//printf("%d,",o);
 				}
-			//}
+			}
 		}
 	}
-	clock_gettime(CLOCK_REALTIME, &time2);
-	timedif.tv_sec = time2.tv_sec - time1.tv_sec;
-	timedif.tv_nsec = time2.tv_nsec - time1.tv_nsec;
-	printf("\ntimedif: %u, %u\n",timedif.tv_sec,timedif.tv_nsec);
+	time2 = gettime();
+	timedif = time2 - time1;
+	printf("\ntimedif: %u\n",timedif);
 	cgetc();
 
 	bgcolor(COLOR_ORANGE);
