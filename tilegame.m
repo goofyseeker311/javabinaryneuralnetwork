@@ -8,7 +8,7 @@ d = round(c*2^8);
 fn = "tiledata.prg";
 fopen(fn,'w');
 fwrite(fn,cast(0x6000,'uint16'),'uint16',0,'l');
-fwrite(fn,cast(d,'int16'),'int16',0,'l');
+fwrite(fn,cast(d,'int8'),'int8',0,'l');
 fclose(fn);
 
 scatter(d(1,:),d(2,:)); daspect([1 1])

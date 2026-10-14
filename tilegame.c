@@ -8,10 +8,14 @@
 #include <tgi.h>
 
 typedef struct {
-	int x, y;
+	char x, y;
 } vec;
 typedef struct {
-	vec pos, dir;
+	int x, y;
+} point;
+typedef struct {
+	point pos;
+	vec dir;
 } ray;
 typedef struct {
 	ray loc;
