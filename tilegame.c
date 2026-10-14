@@ -78,14 +78,14 @@ void main(void) {
 			while (!f) {
 				x = screenray.pos.x>>FPS;
 				y = screenray.pos.y>>FPS;
-				if (((x&0b11100000)==0)&&((y&0b11100000)==0)) {
+				if (((x&0b11000000)==0)&&((y&0b11000000)==0)) {
 					i = (y<<6)+x;
 					m = TILEDROOM[i];
 					if (m==0) {
 						n = TILEDSDF[i];
 						screenray.pos.x += screenray.dir.x<<n;
 						screenray.pos.y += screenray.dir.y<<n;
-						o++;
+						o += 1<<n;
 					} else {
 						f = true;
 						//printf("%u,",o);
@@ -93,7 +93,7 @@ void main(void) {
 				} else {
 					f = true;
 					m = 255;
-					//printf("%d,",o);
+					//printf("%u,",o);
 				}
 			}
 		}
