@@ -78,29 +78,27 @@ void main(void) {
 		screenray.dir = RAYTABLE[player.ang+l];
 		f = false;
 		o = 0;
-		if ((screenray.dir.x!=0)||(screenray.dir.y!=0)) {
-			while (!f) {
-				x = screenray.pos.x>>FPS;
-				y = screenray.pos.y>>FPS;
-				if (((x&0b11000000)==0)&&((y&0b11000000)==0)) {
-					i = (y<<6)+x;
-					m = TILEDROOM[i];
-					if (m==0) {
-						n = TILEDSDF[i];
-						screenray.pos.x += screenray.dir.x<<n;
-						screenray.pos.y += screenray.dir.y<<n;
-						o += 1<<n;
-					} else {
-						f = true;
-						//printf("%u,",o);
-					}
+		do {
+			x = screenray.pos.x>>FPS;
+			y = screenray.pos.y>>FPS;
+			if (((x&0b11000000)!=0)||((y&0b11000000)!=0)) {
+				f = true;
+				m = 255;
+				//printf("%u,",o);
+			} else {
+				i = (y<<6)+x;
+				m = TILEDROOM[i];
+				if (m==0) {
+					n = TILEDSDF[i];
+					screenray.pos.x += screenray.dir.x<<n;
+					screenray.pos.y += screenray.dir.y<<n;
+					o += 1<<n;
 				} else {
 					f = true;
-					m = 255;
 					//printf("%u,",o);
 				}
 			}
-		}
+		} while(!f);
 	}
 	time2 = gettime();
 	timedif = time2 - time1;
