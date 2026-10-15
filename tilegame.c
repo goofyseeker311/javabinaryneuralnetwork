@@ -40,7 +40,7 @@ bool f=false;
 int i=0, j=0, c=0, d=0;
 char x=0, y=0, z=0, w=0, a=0, b=0;
 unsigned int k=0, q=0, r=0, s=0, t=0;
-unsigned char l=0, m=0, n=0, o=0, p=0;
+unsigned char l=0, m=0, n=0, o=0, p=0, u=0, v=0;
 unsigned long time1, time2, timedif;
 char *ostr = "key:          ";
 
@@ -55,6 +55,74 @@ unsigned int loadfile(const char* filename, unsigned memory) {
 	cbm_k_setlfs(1, 8, 0);
 	cbm_k_setnam(filename);
 	return cbm_k_load(0, memory);
+}
+
+void handlekb() {
+	if(kbhit()!=0) {
+		a = cgetc();
+		switch (a) {
+			case 3:
+				w = 1;
+				sprintf(ostr, "key: exit.   ");
+			break;
+			case 87:
+			case 145:
+				player.pos.x += player.dir.x;
+				player.pos.y += player.dir.y;
+				sprintf(ostr, "key: fwd.    ");
+			break;
+			case 83:
+			case 17:
+				player.pos.x -= player.dir.x;
+				player.pos.y -= player.dir.y;
+				sprintf(ostr, "key: bck.    ");
+			break;
+			case 68:
+				player.pos.x += player.rgt.x;
+				player.pos.y += player.rgt.y;
+				sprintf(ostr, "key: srt.    ");
+			break;
+			case 65:
+				player.pos.x -= player.rgt.x;
+				player.pos.y -= player.rgt.y;
+				sprintf(ostr, "key: slt.    ");
+			break;
+			case 29:
+				player.angfwd += 1;
+				if (player.angfwd>=40) {
+					player.angfwd = 0;
+				}
+				player.angrgt += 1;
+				if (player.angrgt>=40) {
+					player.angrgt = 0;
+				}
+				k = (player.angfwd<<3)+(player.angfwd<<5);
+				player.dir = RAYTABLE[k+20];
+				k = (player.angrgt<<3)+(player.angrgt<<5);
+				player.rgt = RAYTABLE[k+20];
+				sprintf(ostr, "key: rgt.    ");
+			break;
+			case 157:
+				player.angfwd -= 1;
+				if (player.angfwd>=40) {
+					player.angfwd = 39;
+				}
+				player.angrgt -= 1;
+				if (player.angrgt>=40) {
+					player.angrgt = 39;
+				}
+				k = (player.angfwd<<3)+(player.angfwd<<5);
+				player.dir = RAYTABLE[k+20];
+				k = (player.angrgt<<3)+(player.angrgt<<5);
+				player.rgt = RAYTABLE[k+20];
+				sprintf(ostr, "key: lft.    ");
+			break;
+			default:
+				sprintf(ostr, "key: %d      ",a);
+			break;
+		}
+		cputsxy(0, 24, ostr);
+	}
 }
 
 void main(void) {
@@ -80,74 +148,14 @@ void main(void) {
 	textcolor(COLOR_WHITE);
 	clrscr();
 	while (w==0) {
-		if(kbhit()!=0) {
-			a = cgetc();
-			switch (a) {
-				case 3:
-					w = 1;
-					sprintf(ostr, "key: exit.   ");
-				break;
-				case 87:
-				case 145:
-					player.pos.x += player.dir.x;
-					player.pos.y += player.dir.y;
-					sprintf(ostr, "key: fwd.    ");
-				break;
-				case 83:
-				case 17:
-					player.pos.x -= player.dir.x;
-					player.pos.y -= player.dir.y;
-					sprintf(ostr, "key: bck.    ");
-				break;
-				case 68:
-					player.pos.x += player.rgt.x;
-					player.pos.y += player.rgt.y;
-					sprintf(ostr, "key: srt.    ");
-				break;
-				case 65:
-					player.pos.x -= player.rgt.x;
-					player.pos.y -= player.rgt.y;
-					sprintf(ostr, "key: slt.    ");
-				break;
-				case 29:
-					player.angfwd += 1;
-					if (player.angfwd>=40) {
-						player.angfwd = 0;
-					}
-					player.angrgt += 1;
-					if (player.angrgt>=40) {
-						player.angrgt = 0;
-					}
-					k = (player.angfwd<<3)+(player.angfwd<<5);
-					player.dir = RAYTABLE[k+20];
-					k = (player.angrgt<<3)+(player.angrgt<<5);
-					player.rgt = RAYTABLE[k+20];
-					sprintf(ostr, "key: rgt.    ");
-				break;
-				case 157:
-					player.angfwd -= 1;
-					if (player.angfwd>=40) {
-						player.angfwd = 39;
-					}
-					player.angrgt -= 1;
-					if (player.angrgt>=40) {
-						player.angrgt = 39;
-					}
-					k = (player.angfwd<<3)+(player.angfwd<<5);
-					player.dir = RAYTABLE[k+20];
-					k = (player.angrgt<<3)+(player.angrgt<<5);
-					player.rgt = RAYTABLE[k+20];
-					sprintf(ostr, "key: lft.    ");
-				break;
-				default:
-					sprintf(ostr, "key: %d      ",a);
-				break;
-			}
-			cputsxy(0, 24, ostr);
+		handlekb();
+		u+=5;
+		if (u>=8) {
+			u-=8;
 		}
 		time1 = gettime();
 		k = (player.angfwd<<3)+(player.angfwd<<5) + (SCREENWIDTH-1);
-		for (l=0;l<SCREENWIDTH;l++) {
+		for (l=u;l<SCREENWIDTH;l+=8) {
 			screenray.pos = player.pos;
 			screenray.dir = RAYTABLE[k-l];
 			f = false;
@@ -172,7 +180,7 @@ void main(void) {
 						textcolor(COLOR_LIGHTBLUE);
 						cvlinexy(l, 0, p);
 						textcolor(COLOR_GRAY2);
-						cvlinexy(l, p, (12-p)<<1);
+						cvlinexy(l, p, 24-p-p);
 						textcolor(COLOR_LIGHTGREEN);
 						cvlinexy(l, 24-p, p);
 					}
@@ -186,7 +194,7 @@ void main(void) {
 					textcolor(COLOR_LIGHTBLUE);
 					cvlinexy(l, 0, p);
 					textcolor(COLOR_LIGHTRED);
-					cvlinexy(l, p, (12-p)<<1);
+					cvlinexy(l, p, 24-p-p);
 					textcolor(COLOR_LIGHTGREEN);
 					cvlinexy(l, 24-p, p);
 				}
