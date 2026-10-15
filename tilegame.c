@@ -42,7 +42,7 @@ unsigned int k=0;
 unsigned char l=0, m=0, n=0, o=0, p=0;
 unsigned long time1, time2, timedif;
 
-ent player = {2<<FPS,3<<FPS,0,1,0};
+ent player = {2<<FPS,3<<FPS,1<<FPS,0<<FPS,30};
 ray screenray = {0};
 
 unsigned long gettime() {
@@ -70,9 +70,9 @@ void main(void) {
 	printf("lf2: %u - %u: %d, %d, %d, %d\n",l,k,RAYTABLE[0].x,RAYTABLE[0].y,RAYTABLE[1].x,RAYTABLE[1].y);
 	time1 = gettime();
 	for (l=0;l<SCREENWIDTH;l++) {
-		p = (player.ang<<3)+(player.ang<<5) + l;
+		k = (player.ang<<3)+(player.ang<<5) + l;
 		screenray.pos = player.loc.pos;
-		screenray.dir = RAYTABLE[p];
+		screenray.dir = RAYTABLE[k];
 		f = false;
 		o = 0;
 		do {
@@ -88,12 +88,12 @@ void main(void) {
 					o += 1<<n;
 				} else {
 					f = true;
-					//printf("%u,",o);
+					printf("%u,",o);
 				}
 			} else {
 				f = true;
 				m = 255;
-				//printf("%u,",o);
+				printf("%u,",o);
 			}
 		} while(!f);
 	}
