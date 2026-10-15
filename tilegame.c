@@ -68,9 +68,16 @@ void main(void) {
 	k = loadfile("tiledata2", (unsigned)RAYTABLE);
 	l = cbm_k_readst();
 	printf("lf2: %u - %u: %d, %d, %d, %d\n",l,k,RAYTABLE[0].x,RAYTABLE[0].y,RAYTABLE[1].x,RAYTABLE[1].y);
+	cputcxy(0,0,'a');
+	cgetc();
+
+	bordercolor(COLOR_BLACK);
+	bgcolor(COLOR_GRAY1);
+	textcolor(COLOR_WHITE);
+	clrscr();
 	time1 = gettime();
 	for (l=0;l<SCREENWIDTH;l++) {
-		k = (player.ang<<3)+(player.ang<<5) + l;
+		k = (player.ang<<3)+(player.ang<<5) + (SCREENWIDTH-1-l);
 		screenray.pos = player.loc.pos;
 		screenray.dir = RAYTABLE[k];
 		f = false;
@@ -88,18 +95,31 @@ void main(void) {
 					o += 1<<n;
 				} else {
 					f = true;
-					printf("%u,",o);
+					//printf("%u,",o);
+					p = o>>1;
+					textcolor(COLOR_LIGHTBLUE);
+					cvlinexy(l, 0, p);
+					textcolor(COLOR_GRAY2);
+					cvlinexy(l, p, 1+((12-p)<<1));
+					textcolor(COLOR_LIGHTGREEN);
+					cvlinexy(l, 25-p, p);
 				}
 			} else {
 				f = true;
 				m = 255;
-				printf("%u,",o);
+				//printf("%u,",o);
+				p = o>>1;
+				textcolor(COLOR_LIGHTBLUE);
+				cvlinexy(l, 0, p);
+				textcolor(COLOR_LIGHTRED);
+				cvlinexy(l, p, 1+((12-p)<<1));
+				textcolor(COLOR_LIGHTGREEN);
+				cvlinexy(l, 25-p, p);
 			}
 		} while(!f);
 	}
 	time2 = gettime();
 	timedif = time2 - time1;
-	printf("\ntimedif: %u\n",timedif);
 	cgetc();
 
 	bgcolor(COLOR_ORANGE);
@@ -107,6 +127,7 @@ void main(void) {
 	textcolor(COLOR_GREEN);
 	clrscr();
 	printf("Init.\n");
+	printf("\ntimedif: %u\n",timedif);
 	cgetc();
 
 	tgi_install(tgi_static_stddrv);
