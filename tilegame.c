@@ -1,6 +1,7 @@
 #include <c64.h>
 #include <cbm.h>
 #include <conio.h>
+#include <joystick.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -14,8 +15,8 @@ typedef struct {
 	vec pos, dir;
 } ray;
 typedef struct {
-	ray loc;
-	unsigned char ang;
+	vec pos, dir, rgt;
+	unsigned char angfwd, angrgt;
 } ent;
 
 const unsigned char tgipalette[2] = {TGI_COLOR_BLACK, TGI_COLOR_LIGHTBLUE};
@@ -36,13 +37,14 @@ const unsigned char tgipalette[2] = {TGI_COLOR_BLACK, TGI_COLOR_LIGHTBLUE};
 #define RAYTABLE ((vec*)0x6000)
 
 bool f=false;
-int i=0, j=0, a=0, b=0, c=0, d=0;
-char x=0, y=0, z=0, w=0;
-unsigned int k=0;
+int i=0, j=0, c=0, d=0;
+char x=0, y=0, z=0, w=0, a=0, b=0;
+unsigned int k=0, q=0, r=0, s=0, t=0;
 unsigned char l=0, m=0, n=0, o=0, p=0;
 unsigned long time1, time2, timedif;
+char *ostr = "key:          ";
 
-ent player = {2<<FPS,3<<FPS,1<<FPS,0<<FPS,30};
+ent player = {2<<FPS,3<<FPS,1<<FPS,0<<FPS,0<<FPS,1<<FPS,30,0};
 ray screenray = {0};
 
 unsigned long gettime() {
@@ -56,6 +58,8 @@ unsigned int loadfile(const char* filename, unsigned memory) {
 }
 
 void main(void) {
+	joy_load_driver(joy_static_stddrv);
+
 	bzero(TILEDROOM, TILEDSIZE);
 	bzero(TILEDSDF, TILEDSIZE);
 	bzero(RAYTABLE, RAYSIZE*4);
@@ -75,51 +79,124 @@ void main(void) {
 	bgcolor(COLOR_GRAY1);
 	textcolor(COLOR_WHITE);
 	clrscr();
-	time1 = gettime();
-	for (l=0;l<SCREENWIDTH;l++) {
-		k = (player.ang<<3)+(player.ang<<5) + (SCREENWIDTH-1-l);
-		screenray.pos = player.loc.pos;
-		screenray.dir = RAYTABLE[k];
-		f = false;
-		o = 0;
-		do {
-			x = screenray.pos.x>>FPS;
-			y = screenray.pos.y>>FPS;
-			if (((x&0b11000000)==0)&&((y&0b11000000)==0)) {
-				i = (y<<6)+x;
-				m = TILEDROOM[i];
-				if (m==0) {
-					n = TILEDSDF[i];
-					screenray.pos.x += screenray.dir.x<<n;
-					screenray.pos.y += screenray.dir.y<<n;
-					o += 1<<n;
+	while (w==0) {
+		if(kbhit()!=0) {
+			a = cgetc();
+			switch (a) {
+				case 3:
+					w = 1;
+					sprintf(ostr, "key: exit.   ");
+				break;
+				case 87:
+				case 145:
+					player.pos.x += player.dir.x;
+					player.pos.y += player.dir.y;
+					sprintf(ostr, "key: fwd.    ");
+				break;
+				case 83:
+				case 17:
+					player.pos.x -= player.dir.x;
+					player.pos.y -= player.dir.y;
+					sprintf(ostr, "key: bck.    ");
+				break;
+				case 68:
+					player.pos.x += player.rgt.x;
+					player.pos.y += player.rgt.y;
+					sprintf(ostr, "key: srt.    ");
+				break;
+				case 65:
+					player.pos.x -= player.rgt.x;
+					player.pos.y -= player.rgt.y;
+					sprintf(ostr, "key: slt.    ");
+				break;
+				case 29:
+					player.angfwd += 1;
+					if (player.angfwd>=40) {
+						player.angfwd = 0;
+					}
+					player.angrgt += 1;
+					if (player.angrgt>=40) {
+						player.angrgt = 0;
+					}
+					k = (player.angfwd<<3)+(player.angfwd<<5);
+					player.dir = RAYTABLE[k+20];
+					k = (player.angrgt<<3)+(player.angrgt<<5);
+					player.rgt = RAYTABLE[k+20];
+					sprintf(ostr, "key: rgt.    ");
+				break;
+				case 157:
+					player.angfwd -= 1;
+					if (player.angfwd>=40) {
+						player.angfwd = 39;
+					}
+					player.angrgt -= 1;
+					if (player.angrgt>=40) {
+						player.angrgt = 39;
+					}
+					k = (player.angfwd<<3)+(player.angfwd<<5);
+					player.dir = RAYTABLE[k+20];
+					k = (player.angrgt<<3)+(player.angrgt<<5);
+					player.rgt = RAYTABLE[k+20];
+					sprintf(ostr, "key: lft.    ");
+				break;
+				default:
+					sprintf(ostr, "key: %d      ",a);
+				break;
+			}
+			cputsxy(0, 24, ostr);
+		}
+		time1 = gettime();
+		k = (player.angfwd<<3)+(player.angfwd<<5) + (SCREENWIDTH-1);
+		for (l=0;l<SCREENWIDTH;l++) {
+			screenray.pos = player.pos;
+			screenray.dir = RAYTABLE[k-l];
+			f = false;
+			o = 0;
+			do {
+				x = screenray.pos.x>>FPS;
+				y = screenray.pos.y>>FPS;
+				if (((x&0b11000000)==0)&&((y&0b11000000)==0)) {
+					i = (y<<6)+x;
+					m = TILEDROOM[i];
+					if (m==0) {
+						n = TILEDSDF[i];
+						screenray.pos.x += screenray.dir.x<<n;
+						screenray.pos.y += screenray.dir.y<<n;
+						o += 1<<n;
+					} else {
+						f = true;
+						p = o>>1;
+						if (p>12) {
+							p = 12;
+						}
+						textcolor(COLOR_LIGHTBLUE);
+						cvlinexy(l, 0, p);
+						textcolor(COLOR_GRAY2);
+						cvlinexy(l, p, (12-p)<<1);
+						textcolor(COLOR_LIGHTGREEN);
+						cvlinexy(l, 24-p, p);
+					}
 				} else {
 					f = true;
-					//printf("%u,",o);
+					m = 255;
 					p = o>>1;
+					if (p>12) {
+						p = 12;
+					}
 					textcolor(COLOR_LIGHTBLUE);
 					cvlinexy(l, 0, p);
-					textcolor(COLOR_GRAY2);
-					cvlinexy(l, p, 1+((12-p)<<1));
+					textcolor(COLOR_LIGHTRED);
+					cvlinexy(l, p, (12-p)<<1);
 					textcolor(COLOR_LIGHTGREEN);
-					cvlinexy(l, 25-p, p);
+					cvlinexy(l, 24-p, p);
 				}
-			} else {
-				f = true;
-				m = 255;
-				//printf("%u,",o);
-				p = o>>1;
-				textcolor(COLOR_LIGHTBLUE);
-				cvlinexy(l, 0, p);
-				textcolor(COLOR_LIGHTRED);
-				cvlinexy(l, p, 1+((12-p)<<1));
-				textcolor(COLOR_LIGHTGREEN);
-				cvlinexy(l, 25-p, p);
-			}
-		} while(!f);
+			} while(!f);
+		}
+		time2 = gettime();
+		timedif = time2 - time1;
+		sprintf(ostr, "jcd: %u   ",timedif);
+		cputsxy(20, 24, ostr);
 	}
-	time2 = gettime();
-	timedif = time2 - time1;
 	cgetc();
 
 	bgcolor(COLOR_ORANGE);
@@ -127,7 +204,6 @@ void main(void) {
 	textcolor(COLOR_GREEN);
 	clrscr();
 	printf("Init.\n");
-	printf("\ntimedif: %u\n",timedif);
 	cgetc();
 
 	tgi_install(tgi_static_stddrv);
