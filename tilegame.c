@@ -8,14 +8,10 @@
 #include <tgi.h>
 
 typedef struct {
-	char x, y;
+	int x, y;
 } vec;
 typedef struct {
-	int x, y;
-} point;
-typedef struct {
-	point pos;
-	vec dir;
+	vec pos, dir;
 } ray;
 typedef struct {
 	ray loc;
@@ -46,7 +42,7 @@ unsigned int k=0;
 unsigned char l=0, m=0, n=0, o=0, p=0;
 unsigned long time1, time2, timedif;
 
-ent player = {2<<FPS,3<<FPS,0<<FPS,1<<FPS,0};
+ent player = {2<<FPS,3<<FPS,0,1,0};
 ray screenray = {0};
 
 unsigned long gettime() {
@@ -65,27 +61,24 @@ void main(void) {
 	bzero(RAYTABLE, RAYSIZE*4);
 	k = loadfile("tiledroom", (unsigned)TILEDROOM);
 	l = cbm_k_readst();
-	printf("lf0: %u - %u: %i, %i, %i, %i\n",l,k,TILEDROOM[0],TILEDROOM[1],TILEDROOM[2],TILEDROOM[3]);
+	printf("lf0: %u - %u: %u, %u, %u, %u\n",l,k,TILEDROOM[0],TILEDROOM[1],TILEDROOM[2],TILEDROOM[3]);
 	k = loadfile("tiledsdf", (unsigned)TILEDSDF);
 	l = cbm_k_readst();
-	printf("lf1: %u - %u: %i, %i, %i, %i\n",l,k,TILEDSDF[0],TILEDSDF[1],TILEDSDF[2],TILEDSDF[3]);
-	k = loadfile("tiledata", (unsigned)RAYTABLE);
+	printf("lf1: %u - %u: %u, %u, %u, %u\n",l,k,TILEDSDF[0],TILEDSDF[1],TILEDSDF[2],TILEDSDF[3]);
+	k = loadfile("tiledata2", (unsigned)RAYTABLE);
 	l = cbm_k_readst();
-	printf("lf2: %u - %u: %i, %i, %i, %i\n",l,k,RAYTABLE[0].x,RAYTABLE[0].y,RAYTABLE[1].x,RAYTABLE[1].y);
+	printf("lf2: %u - %u: %d, %d, %d, %d\n",l,k,RAYTABLE[0].x,RAYTABLE[0].y,RAYTABLE[1].x,RAYTABLE[1].y);
 	time1 = gettime();
 	for (l=0;l<SCREENWIDTH;l++) {
+		p = (player.ang<<3)+(player.ang<<5) + l;
 		screenray.pos = player.loc.pos;
-		screenray.dir = RAYTABLE[player.ang+l];
+		screenray.dir = RAYTABLE[p];
 		f = false;
 		o = 0;
 		do {
 			x = screenray.pos.x>>FPS;
 			y = screenray.pos.y>>FPS;
-			if (((x&0b11000000)!=0)||((y&0b11000000)!=0)) {
-				f = true;
-				m = 255;
-				//printf("%u,",o);
-			} else {
+			if (((x&0b11000000)==0)&&((y&0b11000000)==0)) {
 				i = (y<<6)+x;
 				m = TILEDROOM[i];
 				if (m==0) {
@@ -97,6 +90,10 @@ void main(void) {
 					f = true;
 					//printf("%u,",o);
 				}
+			} else {
+				f = true;
+				m = 255;
+				//printf("%u,",o);
 			}
 		} while(!f);
 	}
