@@ -202,7 +202,7 @@ void main(void) {
 		}
 		time2 = gettime();
 		timedif = time2 - time1;
-		sprintf(ostr, "jcd: %u   ",timedif);
+		sprintf(ostr, "jcd: %u    ",timedif);
 		cputsxy(20, 24, ostr);
 	}
 	cgetc();
