@@ -23,6 +23,7 @@ typedef struct {
 
 const unsigned char tgipalette[2] = {TGI_COLOR_BLACK, TGI_COLOR_LIGHTBLUE};
 
+#define CHARACTERSIZE 0x800
 #define SCREENWIDTH 40
 #define SCREENHEIGHT 25
 #define SCREENSIZE 1000
@@ -31,12 +32,16 @@ const unsigned char tgipalette[2] = {TGI_COLOR_BLACK, TGI_COLOR_LIGHTBLUE};
 #define RAYCOUNT 256
 #define RAYSIZE 512
 #define FPS 8
+#define CHARACTER_ROM_CONFIG ((unsigned char*)0x0001)
 #define JIFFY_CLOCK ((unsigned char*)0x00A0)
+#define CHARACTER_RAM ((unsigned char*)0x3800)
 #define SCREEN_RAM ((unsigned char*)0x8400)
 #define BITMAP_RAM ((unsigned char*)0xA000)
 #define TILEDROOM ((unsigned char*)0x4000)
 #define TILEDSDF ((unsigned char*)0x5000)
 #define RAYTABLE ((vec*)0x6000)
+#define CHARACTER_ROM ((unsigned char*)0xD000)
+#define TIMERA_CONFIG ((unsigned char*)0xDC0E)
 
 bool f=false;
 int i=0, j=0, c=0, d=0;
@@ -214,6 +219,16 @@ void main(void) {
 	cputcxy(0,0,'a');
 	cgetc();
 
+	TIMERA_CONFIG[0] = TIMERA_CONFIG[0]&0xFE;
+	CHARACTER_ROM_CONFIG[0] = CHARACTER_ROM_CONFIG[0]&0xFB;
+	memcpy(CHARACTER_RAM, CHARACTER_ROM+0x800, CHARACTERSIZE);
+	for (l=0;l<8;l+=2) {
+		CHARACTER_RAM[744+l+0] = 0xaa;
+		CHARACTER_RAM[744+l+1] = 0x55;
+	}
+	CHARACTER_ROM_CONFIG[0] = CHARACTER_ROM_CONFIG[0]|0x4;
+	TIMERA_CONFIG[0] = TIMERA_CONFIG[0]|0x1;
+	VIC.addr = 0b00011110;
 	bordercolor(COLOR_BLACK);
 	bgcolor(COLOR_GRAY1);
 	textcolor(COLOR_WHITE);
@@ -280,6 +295,7 @@ void main(void) {
 	}
 	cgetc();
 
+	VIC.addr = 0b00010110;
 	bgcolor(COLOR_ORANGE);
 	bordercolor(COLOR_CYAN);
 	textcolor(COLOR_GREEN);
