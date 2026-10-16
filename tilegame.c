@@ -1,7 +1,7 @@
 #include <c64.h>
 #include <cbm.h>
 #include <conio.h>
-#include <joystick.h>
+#include <mouse.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -43,6 +43,8 @@ unsigned int k=0, q=0, r=0, s=0, t=0;
 unsigned char l=0, m=0, n=0, o=0, p=0, u=0, v=0;
 unsigned long time1, time2, timedif;
 char *ostr = "key:          ";
+struct mouse_info mouseinfo, mouseold;
+unsigned char joycount;
 
 ent player = {2<<FPS,3<<FPS,1<<FPS,0<<FPS,0<<FPS,1<<FPS,30,0};
 ray screenray = {0};
@@ -57,7 +59,7 @@ unsigned int loadfile(const char* filename, unsigned memory) {
 	return cbm_k_load(0, memory);
 }
 
-void handlekb() {
+void handlekeyboard() {
 	if(kbhit()!=0) {
 		a = cgetc();
 		switch (a) {
@@ -125,8 +127,48 @@ void handlekb() {
 	}
 }
 
+void handlemouse() {
+	mouse_info(&mouseinfo);
+	if (mouseinfo.pos.x!=mouseold.pos.x) {
+		c = mouseinfo.pos.x - mouseold.pos.x;
+		if (c>0) {
+			player.angfwd += 1;
+			if (player.angfwd>=40) {
+				player.angfwd = 0;
+			}
+			player.angrgt += 1;
+			if (player.angrgt>=40) {
+				player.angrgt = 0;
+			}
+			k = (player.angfwd<<3)+(player.angfwd<<5);
+			player.dir = RAYTABLE[k+20];
+			k = (player.angrgt<<3)+(player.angrgt<<5);
+			player.rgt = RAYTABLE[k+20];
+			sprintf(ostr, "mse: rgt.    ");
+		} else if (c<0) {
+			player.angfwd -= 1;
+			if (player.angfwd>=40) {
+				player.angfwd = 39;
+			}
+			player.angrgt -= 1;
+			if (player.angrgt>=40) {
+				player.angrgt = 39;
+			}
+			k = (player.angfwd<<3)+(player.angfwd<<5);
+			player.dir = RAYTABLE[k+20];
+			k = (player.angrgt<<3)+(player.angrgt<<5);
+			player.rgt = RAYTABLE[k+20];
+			sprintf(ostr, "mse: lft.    ");
+		}
+		cputsxy(0, 24, ostr);
+	}
+	mouseold.pos.x = 160;
+	mouseold.pos.y = 100;
+	mouse_move(mouseold.pos.x, mouseold.pos.y);
+}
+
 void main(void) {
-	joy_load_driver(joy_static_stddrv);
+	mouse_install(&mouse_def_callbacks, mouse_static_stddrv);
 
 	bzero(TILEDROOM, TILEDSIZE);
 	bzero(TILEDSDF, TILEDSIZE);
@@ -148,7 +190,8 @@ void main(void) {
 	textcolor(COLOR_WHITE);
 	clrscr();
 	while (w==0) {
-		handlekb();
+		handlekeyboard();
+		handlemouse();
 		u+=5;
 		if (u>=8) {
 			u-=8;
