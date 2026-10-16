@@ -1,6 +1,7 @@
 #include <c64.h>
 #include <cbm.h>
 #include <conio.h>
+#include <joystick.h>
 #include <mouse.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -43,6 +44,7 @@ char x=0, y=0, z=0, w=0, a=0, b=0;
 unsigned int k=0, q=0, r=0, s=0, t=0;
 unsigned char l=0, m=0, n=0, o=0, p=0, u=0, v=0;
 unsigned long time1, time2, timedif;
+unsigned char shufflestep = 0;
 char *ostr = "key:          ";
 struct mouse_info mouseinfo, mouseold;
 unsigned char joycount;
@@ -149,7 +151,52 @@ void handlemouse() {
 	mouse_move(mouseold.pos.x, mouseold.pos.y);
 }
 
+void handlejoystick() {
+	joycount = joy_count();
+	if (joycount>1) {
+		u = joy_read(1);
+		if (u!=0) {
+			switch(u) {
+				case JOY_UP_MASK:
+					player.pos.x += player.dir.x;
+					player.pos.y += player.dir.y;
+					sprintf(ostr, "joy: fwd.    ");
+				break;
+				case JOY_DOWN_MASK:
+					player.pos.x -= player.dir.x;
+					player.pos.y -= player.dir.y;
+					sprintf(ostr, "joy: bck.    ");
+				break;
+				case JOY_RIGHT_MASK:
+					player.angfwd += 1;
+					player.angrgt += 1;
+					changeplayerdir();
+					sprintf(ostr, "joy: rgt.    ");
+				break;
+				case JOY_LEFT_MASK:
+					player.angfwd -= 1;
+					player.angrgt -= 1;
+					changeplayerdir();
+					sprintf(ostr, "joy: lft.    ");
+				break;
+				case JOY_RIGHT_MASK|JOY_DOWN_MASK:
+					player.pos.x += player.rgt.x;
+					player.pos.y += player.rgt.y;
+					sprintf(ostr, "joy: srt.    ");
+				break;
+				case JOY_LEFT_MASK|JOY_DOWN_MASK:
+					player.pos.x -= player.rgt.x;
+					player.pos.y -= player.rgt.y;
+					sprintf(ostr, "joy: slt.    ");
+				break;
+			}
+			cputsxy(0, 24, ostr);
+		}
+	}
+}
+
 void main(void) {
+	joy_install(joy_static_stddrv);
 	mouse_install(&mouse_def_callbacks, mouse_static_stddrv);
 
 	bzero(TILEDROOM, TILEDSIZE);
@@ -174,13 +221,14 @@ void main(void) {
 	while (w==0) {
 		handlekeyboard();
 		handlemouse();
-		u+=5;
-		if (u>=8) {
-			u-=8;
+		handlejoystick();
+		shufflestep+=5;
+		if (shufflestep>=8) {
+			shufflestep-=8;
 		}
 		time1 = gettime();
-		k = (player.angfwd<<3)+(player.angfwd<<5) + (SCREENWIDTH-1);
-		for (l=u;l<SCREENWIDTH;l+=8) {
+		k = player.indfwd + (SCREENWIDTH-1);
+		for (l=shufflestep;l<SCREENWIDTH;l+=8) {
 			screenray.pos = player.pos;
 			screenray.dir = RAYTABLE[k-l];
 			f = false;
