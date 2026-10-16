@@ -16,7 +16,8 @@ typedef struct {
 } ray;
 typedef struct {
 	vec pos, dir, rgt;
-	unsigned char angfwd, angrgt;
+	int angfwd, angrgt;
+	int indfwd, indrgt;
 } ent;
 
 const unsigned char tgipalette[2] = {TGI_COLOR_BLACK, TGI_COLOR_LIGHTBLUE};
@@ -59,6 +60,23 @@ unsigned int loadfile(const char* filename, unsigned memory) {
 	return cbm_k_load(0, memory);
 }
 
+void changeplayerdir() {
+	if (player.angfwd<0) {
+		player.angfwd = 39;
+	} else if (player.angfwd>39) {
+		player.angfwd = 0;
+	}
+	if (player.angrgt<0) {
+		player.angrgt = 39;
+	} else if (player.angrgt>39) {
+		player.angrgt = 0;
+	}
+	player.indfwd = (player.angfwd<<3)+(player.angfwd<<5);
+	player.dir = RAYTABLE[player.indfwd+20];
+	player.indrgt = (player.angrgt<<3)+(player.angrgt<<5);
+	player.rgt = RAYTABLE[player.indrgt+20];
+}
+
 void handlekeyboard() {
 	if(kbhit()!=0) {
 		a = cgetc();
@@ -91,32 +109,14 @@ void handlekeyboard() {
 			break;
 			case 29:
 				player.angfwd += 1;
-				if (player.angfwd>=40) {
-					player.angfwd = 0;
-				}
 				player.angrgt += 1;
-				if (player.angrgt>=40) {
-					player.angrgt = 0;
-				}
-				k = (player.angfwd<<3)+(player.angfwd<<5);
-				player.dir = RAYTABLE[k+20];
-				k = (player.angrgt<<3)+(player.angrgt<<5);
-				player.rgt = RAYTABLE[k+20];
+				changeplayerdir();
 				sprintf(ostr, "key: rgt.    ");
 			break;
 			case 157:
 				player.angfwd -= 1;
-				if (player.angfwd>=40) {
-					player.angfwd = 39;
-				}
 				player.angrgt -= 1;
-				if (player.angrgt>=40) {
-					player.angrgt = 39;
-				}
-				k = (player.angfwd<<3)+(player.angfwd<<5);
-				player.dir = RAYTABLE[k+20];
-				k = (player.angrgt<<3)+(player.angrgt<<5);
-				player.rgt = RAYTABLE[k+20];
+				changeplayerdir();
 				sprintf(ostr, "key: lft.    ");
 			break;
 			default:
@@ -133,31 +133,13 @@ void handlemouse() {
 		c = mouseinfo.pos.x - mouseold.pos.x;
 		if (c>0) {
 			player.angfwd += 1;
-			if (player.angfwd>=40) {
-				player.angfwd = 0;
-			}
 			player.angrgt += 1;
-			if (player.angrgt>=40) {
-				player.angrgt = 0;
-			}
-			k = (player.angfwd<<3)+(player.angfwd<<5);
-			player.dir = RAYTABLE[k+20];
-			k = (player.angrgt<<3)+(player.angrgt<<5);
-			player.rgt = RAYTABLE[k+20];
+			changeplayerdir();
 			sprintf(ostr, "mse: rgt.    ");
 		} else if (c<0) {
 			player.angfwd -= 1;
-			if (player.angfwd>=40) {
-				player.angfwd = 39;
-			}
 			player.angrgt -= 1;
-			if (player.angrgt>=40) {
-				player.angrgt = 39;
-			}
-			k = (player.angfwd<<3)+(player.angfwd<<5);
-			player.dir = RAYTABLE[k+20];
-			k = (player.angrgt<<3)+(player.angrgt<<5);
-			player.rgt = RAYTABLE[k+20];
+			changeplayerdir();
 			sprintf(ostr, "mse: lft.    ");
 		}
 		cputsxy(0, 24, ostr);
