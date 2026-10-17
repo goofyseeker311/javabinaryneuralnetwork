@@ -34,6 +34,7 @@ const unsigned char tgipalette[2] = {TGI_COLOR_BLACK, TGI_COLOR_LIGHTBLUE};
 #define FPS 8
 #define CHARACTER_ROM_CONFIG ((unsigned char*)0x0001)
 #define JIFFY_CLOCK ((unsigned char*)0x00A0)
+#define TEXT_RAM ((unsigned char*)0x0400)
 #define CHARACTER_RAM ((unsigned char*)0x3800)
 #define SCREEN_RAM ((unsigned char*)0x9C00)
 #define BITMAP_RAM ((unsigned char*)0xA000)
@@ -199,46 +200,56 @@ void handlejoystick() {
 	}
 }
 
-void drawwall() {
+void cvlineccxy(unsigned char xpos, unsigned char ypos, unsigned char len, unsigned char charv, unsigned char charc) {
+	q = (ypos<<5)+(ypos<<3)+xpos;
+	for (u=0;u<len;q+=40,u++) {
+		TEXT_RAM[q] = charv;
+		COLOR_RAM[q] = charc;
+	}
+}
+
+void drawvline(bool hit) {
 	p = o>>1;
 	if (p>12) {
 		p = 12;
 	}
-	textcolor(COLOR_LIGHTBLUE);
-	cvlinexy(l, 0, p);
-	if (m!=255) {
+	v = COLOR_LIGHTBLUE;
+	if (hit) {
+		cvlineccxy(l, 0, p, 224, v);
 		switch(p) {
 			case 12:
 			case 11:
 			case 10:
 			case 9:
 			case 8:
-				textcolor(COLOR_BLACK);
+				v = COLOR_BLACK;
 			break;
 			case 7:
 			case 6:
-				textcolor(COLOR_GRAY1);
+				v = COLOR_GRAY1;
 			break;
 			case 5:
 			case 4:
-				textcolor(COLOR_GRAY2);
+				v = COLOR_GRAY2;
 			break;
 			case 3:
 			case 2:
-				textcolor(COLOR_GRAY3);
+				v = COLOR_GRAY3;
 			break;
 			case 1:
 			case 0:
-				textcolor(COLOR_WHITE);
+				v = COLOR_WHITE;
 			break;
 			default:
-				textcolor(COLOR_CYAN);
+				v = COLOR_CYAN;
 			break;
 		}
+		cvlineccxy(l, p, 24-p-p, 93, v);
+	} else {
+		cvlineccxy(l, 0, 24-p, 224, v);
 	}
-	cvlinexy(l, p, 24-p-p);
-	textcolor(COLOR_LIGHTGREEN);
-	cvlinexy(l, 24-p, p);
+	v = COLOR_LIGHTGREEN;
+	cvlineccxy(l, 24-p, p, 250, v);
 }
 
 void main(void) {
@@ -307,12 +318,12 @@ void main(void) {
 						o += 1<<n;
 					} else {
 						f = true;
-						drawwall();
+						drawvline(true);
 					}
 				} else {
 					f = true;
 					m = 255;
-					drawwall();
+					drawvline(false);
 				}
 			} while(!f);
 		}
