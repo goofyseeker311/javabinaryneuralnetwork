@@ -48,6 +48,7 @@ int i=0, j=0, c=0, d=0;
 char x=0, y=0, z=0, w=0, a=0, b=0;
 unsigned int k=0, q=0, r=0, s=0, t=0;
 unsigned char l=0, m=0, n=0, o=0, p=0, u=0, v=0;
+unsigned char c1=0, c2=0, c3=0, v1=0, v2=0, v3=0;
 unsigned long time1, time2, timedif;
 unsigned char shufflestep = 0;
 char *ostr = "key:          ";
@@ -200,11 +201,19 @@ void handlejoystick() {
 	}
 }
 
-void cvlineccxy(unsigned char xpos, unsigned char ypos, unsigned char len, unsigned char charv, unsigned char charc) {
-	q = (ypos<<5)+(ypos<<3)+xpos;
+void cvlineccxy(unsigned char xpos, unsigned char len, unsigned char charv1, unsigned char charc1, unsigned char charv2, unsigned char charc2, unsigned char charv3, unsigned char charc3) {
+	q = xpos;
 	for (u=0;u<len;q+=40,u++) {
-		TEXT_RAM[q] = charv;
-		COLOR_RAM[q] = charc;
+		TEXT_RAM[q] = charv1;
+		COLOR_RAM[q] = charc1;
+	}
+	for (u=0;u<(24-len-len);q+=40,u++) {
+		TEXT_RAM[q] = charv2;
+		COLOR_RAM[q] = charc2;
+	}
+	for (u=0;u<len;q+=40,u++) {
+		TEXT_RAM[q] = charv3;
+		COLOR_RAM[q] = charc3;
 	}
 }
 
@@ -213,43 +222,36 @@ void drawvline(bool hit) {
 	if (p>12) {
 		p = 12;
 	}
-	v = COLOR_LIGHTBLUE;
+	v1 = 224;
+	c1 = COLOR_LIGHTBLUE;
+	v2 = 224;
+	c2 = COLOR_LIGHTBLUE;
+	v3 = 250;
+	c3 = COLOR_LIGHTGREEN;
 	if (hit) {
-		cvlineccxy(l, 0, p, 224, v);
+		v2 = 93;
 		switch(p) {
-			case 12:
-			case 11:
-			case 10:
-			case 9:
-			case 8:
-				v = COLOR_BLACK;
+			case 12: case 11: case 10: case 9: case 8:
+				c2 = COLOR_BLACK;
 			break;
-			case 7:
-			case 6:
-				v = COLOR_GRAY1;
+			case 7: case 6:
+				c2 = COLOR_GRAY1;
 			break;
-			case 5:
-			case 4:
-				v = COLOR_GRAY2;
+			case 5: case 4:
+				c2 = COLOR_GRAY2;
 			break;
-			case 3:
-			case 2:
-				v = COLOR_GRAY3;
+			case 3: case 2:
+				c2 = COLOR_GRAY3;
 			break;
-			case 1:
-			case 0:
-				v = COLOR_WHITE;
+			case 1: case 0:
+				c2 = COLOR_WHITE;
 			break;
 			default:
-				v = COLOR_CYAN;
+				c2 = COLOR_CYAN;
 			break;
 		}
-		cvlineccxy(l, p, 24-p-p, 93, v);
-	} else {
-		cvlineccxy(l, 0, 24-p, 224, v);
 	}
-	v = COLOR_LIGHTGREEN;
-	cvlineccxy(l, 24-p, p, 250, v);
+	cvlineccxy(l, p, v1, c1, v2, c2, v3, c3);
 }
 
 void main(void) {
