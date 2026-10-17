@@ -276,7 +276,7 @@ void main(void) {
 	CIA1.cra = CIA1.cra|0x1;
 	VIC.addr = 0b00011110;
 	bordercolor(COLOR_BLACK);
-	bgcolor(COLOR_BROWN);
+	bgcolor(COLOR_GRAY1);
 	textcolor(COLOR_WHITE);
 	clrscr();
 	while (w==0) {
