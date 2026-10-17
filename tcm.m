@@ -1,6 +1,6 @@
 close all; clear; output_precision(16);
 
-img = imread("image.jpg");
+img = imread("tileimage.jpg");
 
 c64colors = [
   0x00 0x00 0x00
@@ -33,6 +33,8 @@ tilex = ceil(imgx/tiledim);
 tiley = ceil(imgy/tiledim);
 data = zeros(tilex*tiley,tilesize);
 colors = zeros(tilex*tiley,2);
+data2 = zeros(tilex*tiley,8,'uint8');
+colors2 = zeros(tilex*tiley,1,'uint8');
 
 img(tiley*tiledim,tilex*tiledim,:) = [0,0,0];
 for n = 1:tiley
@@ -57,12 +59,22 @@ for n = 1:tiley
     tiledither(tilei2) = 1;
     colors((n-1)*tilex+m,:) = tilecolorsi([1 2])-1;
     data((n-1)*tilex+m,:) = reshape(tiledither,1,tilesize);
+    colors2((n-1)*tilex+m,1) = bitor((tilecolorsi(1)-1),bitshift((tilecolorsi(2)-1),4));
+    data2((n-1)*tilex+m,:) = flip(bitpack(logical(flip(tiledither'(:))),'uint8'));
   endfor
 endfor
 
 wordsn = size(data,1);
 words = data;
 printf("words loaded (%i).\n",wordsn);
+
+fn = "tileimage.prg";
+fopen(fn,'w');
+fwrite(fn,cast(0x9C00,'uint16'),'uint16',0,'l');
+fwrite(fn,cast(colors2','uint8'),'uint8',0,'l');
+fwrite(fn,cast(zeros(1,24)','uint8'),'uint8',0,'l');
+fwrite(fn,cast(data2','uint8'),'uint8',0,'l');
+fclose(fn);
 
 swordsfull = cast(words,"double");
 swordslen = size(swordsfull,2);
@@ -80,10 +92,10 @@ bb = vinv * swordscentered';
 sc = 2 / max(abs([min(bb(:)) max(bb(:))]));
 if (isinf(sc)) sc = 1; endif
 bb = cast(bb * sc,'int8');
-save -binary -zip image.mat bb sc swordsmean colors swordslen svdcomps tilex tiley tiledim imgx imgy;
+save -binary -zip tileimage.mat bb sc swordsmean colors swordslen svdcomps tilex tiley tiledim imgx imgy;
 
 clear bb sc;
-load image.mat;
+load tileimage.mat;
 bb = cast(bb,'double') / sc;
 
 aa = (vv * bb)' + swordsmean;
@@ -96,6 +108,7 @@ aa(aa(:)>1) = 1;
 aa = cast(aa,'uint8');
 
 img2 = zeros(tiley*tiledim,tilex*tiledim);
+img3 = zeros(tiley*tiledim,tilex*tiledim);
 for n = 1:tiley
   for m = 1:tilex
     tile = aa((n-1)*tilex+m,:);
@@ -104,14 +117,23 @@ for n = 1:tiley
     tile(tilei1) = colors((n-1)*tilex+m,1);
     tile(tilei2) = colors((n-1)*tilex+m,2);
     img2((n-1)*tiledim+(1:tiledim),(m-1)*tiledim+(1:tiledim),:) = reshape(tile,tiledim,tiledim);
+    tile2 = reshape(cast(flip(bitunpack(flip(aa2((n-1)*tilex+m,:)))),'double'),tiledim,tiledim);
+    tile2i1 = tile2==0;
+    tile2i2 = tile2==1;
+    tile2(tile2i1) = bitand(colors2((n-1)*tilex+m,1),0b00001111);
+    tile2(tile2i2) = bitshift(bitand(colors2((n-1)*tilex+m,1),0b11110000),-4);
+    img3((n-1)*tiledim+(1:tiledim),(m-1)*tiledim+(1:tiledim)) = tile2';
   endfor
 endfor
 img2 = cast(img2, "uint8");
+img3 = cast(img3, "uint8");
 
 img = img(1:imgy,1:imgx,:);
 img2 = img2(1:imgy,1:imgx,:);
+img3 = img3(1:imgy,1:imgx,:);
 
 figure(1); image(img); daspect([1 1]); set (gca, "Position", [0 0 1 1]); axis off;
 figure(2); image(img2); daspect([1 1]); set (gca, "Position", [0 0 1 1]); axis off;
+figure(3); image(img3); daspect([1 1]); set (gca, "Position", [0 0 1 1]); axis off;
 printf("compression ratio: %i/%i=%f, average/std error: %f+%f\n",svdcomps,swordslen,cc,dd,dds);
 
