@@ -83,7 +83,7 @@ swordscentered = swordsfull - swordsmean;
 printf("swords (%i,%i).\n",size(swordsfull,1),swordslen);
 
 svdcomps = 5;
-[u, s, v] = svd(swordsfull,'econ');
+[u, s, v] = svd(swordscentered,'econ');
 vv = v(:,1:svdcomps);
 vinv = (eye(swordslen)/vv')';
 printf("svdinv (%i,%i).\n",size(vv,2),size(vv,1));
@@ -106,6 +106,7 @@ dds = std(ad(:));
 aa(aa(:)<0) = 0;
 aa(aa(:)>1) = 1;
 aa = cast(aa,'uint8');
+aa2 = data2;
 
 img2 = zeros(tiley*tiledim,tilex*tiledim);
 img3 = zeros(tiley*tiledim,tilex*tiledim);

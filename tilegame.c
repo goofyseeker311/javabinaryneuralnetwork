@@ -35,13 +35,12 @@ const unsigned char tgipalette[2] = {TGI_COLOR_BLACK, TGI_COLOR_LIGHTBLUE};
 #define CHARACTER_ROM_CONFIG ((unsigned char*)0x0001)
 #define JIFFY_CLOCK ((unsigned char*)0x00A0)
 #define CHARACTER_RAM ((unsigned char*)0x3800)
-#define SCREEN_RAM ((unsigned char*)0x8400)
+#define SCREEN_RAM ((unsigned char*)0x9C00)
 #define BITMAP_RAM ((unsigned char*)0xA000)
 #define TILEDROOM ((unsigned char*)0x4000)
 #define TILEDSDF ((unsigned char*)0x5000)
 #define RAYTABLE ((vec*)0x6000)
 #define CHARACTER_ROM ((unsigned char*)0xD000)
-#define TIMERA_CONFIG ((unsigned char*)0xDC0E)
 
 bool f=false;
 int i=0, j=0, c=0, d=0;
@@ -200,6 +199,48 @@ void handlejoystick() {
 	}
 }
 
+void drawwall() {
+	p = o>>1;
+	if (p>12) {
+		p = 12;
+	}
+	textcolor(COLOR_LIGHTBLUE);
+	cvlinexy(l, 0, p);
+	if (m!=255) {
+		switch(p) {
+			case 12:
+			case 11:
+			case 10:
+			case 9:
+			case 8:
+				textcolor(COLOR_BLACK);
+			break;
+			case 7:
+			case 6:
+				textcolor(COLOR_GRAY1);
+			break;
+			case 5:
+			case 4:
+				textcolor(COLOR_GRAY2);
+			break;
+			case 3:
+			case 2:
+				textcolor(COLOR_GRAY3);
+			break;
+			case 1:
+			case 0:
+				textcolor(COLOR_WHITE);
+			break;
+			default:
+				textcolor(COLOR_CYAN);
+			break;
+		}
+	}
+	cvlinexy(l, p, 24-p-p);
+	textcolor(COLOR_LIGHTGREEN);
+	cvlinexy(l, 24-p, p);
+}
+
 void main(void) {
 	joy_install(joy_static_stddrv);
 	mouse_install(&mouse_def_callbacks, mouse_static_stddrv);
@@ -207,6 +248,8 @@ void main(void) {
 	bzero(TILEDROOM, TILEDSIZE);
 	bzero(TILEDSDF, TILEDSIZE);
 	bzero(RAYTABLE, RAYSIZE*4);
+	bzero(SCREEN_RAM, SCREENSIZE);
+	bzero(BITMAP_RAM, SCREENSIZE*8);
 	k = loadfile("tiledroom", (unsigned)TILEDROOM);
 	l = cbm_k_readst();
 	printf("lf0: %u - %u: %u, %u, %u, %u\n",l,k,TILEDROOM[0],TILEDROOM[1],TILEDROOM[2],TILEDROOM[3]);
@@ -216,10 +259,13 @@ void main(void) {
 	k = loadfile("tiledata2", (unsigned)RAYTABLE);
 	l = cbm_k_readst();
 	printf("lf2: %u - %u: %d, %d, %d, %d\n",l,k,RAYTABLE[0].x,RAYTABLE[0].y,RAYTABLE[1].x,RAYTABLE[1].y);
+	k = loadfile("tileimage", (unsigned)SCREEN_RAM);
+	l = cbm_k_readst();
+	printf("lf3: %u - %u: %d, %d, %d, %d\n",l,k,SCREEN_RAM[0],SCREEN_RAM[1],SCREEN_RAM[2],SCREEN_RAM[3]);
 	cputcxy(0,0,'a');
 	cgetc();
 
-	TIMERA_CONFIG[0] = TIMERA_CONFIG[0]&0xFE;
+	CIA1.cra = CIA1.cra&0xFE;
 	CHARACTER_ROM_CONFIG[0] = CHARACTER_ROM_CONFIG[0]&0xFB;
 	memcpy(CHARACTER_RAM, CHARACTER_ROM+0x800, CHARACTERSIZE);
 	for (l=0;l<8;l+=2) {
@@ -227,10 +273,10 @@ void main(void) {
 		CHARACTER_RAM[744+l+1] = 0x55;
 	}
 	CHARACTER_ROM_CONFIG[0] = CHARACTER_ROM_CONFIG[0]|0x4;
-	TIMERA_CONFIG[0] = TIMERA_CONFIG[0]|0x1;
+	CIA1.cra = CIA1.cra|0x1;
 	VIC.addr = 0b00011110;
 	bordercolor(COLOR_BLACK);
-	bgcolor(COLOR_GRAY1);
+	bgcolor(COLOR_BROWN);
 	textcolor(COLOR_WHITE);
 	clrscr();
 	while (w==0) {
@@ -261,30 +307,12 @@ void main(void) {
 						o += 1<<n;
 					} else {
 						f = true;
-						p = o>>1;
-						if (p>12) {
-							p = 12;
-						}
-						textcolor(COLOR_LIGHTBLUE);
-						cvlinexy(l, 0, p);
-						textcolor(COLOR_GRAY2);
-						cvlinexy(l, p, 24-p-p);
-						textcolor(COLOR_LIGHTGREEN);
-						cvlinexy(l, 24-p, p);
+						drawwall();
 					}
 				} else {
 					f = true;
 					m = 255;
-					p = o>>1;
-					if (p>12) {
-						p = 12;
-					}
-					textcolor(COLOR_LIGHTBLUE);
-					cvlinexy(l, 0, p);
-					textcolor(COLOR_LIGHTRED);
-					cvlinexy(l, p, 24-p-p);
-					textcolor(COLOR_LIGHTGREEN);
-					cvlinexy(l, 24-p, p);
+					drawwall();
 				}
 			} while(!f);
 		}
@@ -315,9 +343,7 @@ void main(void) {
 	CIA2.pra = (CIA2.pra&0b11111100)|0b01;
 	VIC.ctrl1 = (VIC.ctrl1&0b10011111)|0b00100000;
 	VIC.ctrl2 = (VIC.ctrl2&0b11101111)|0b00000000;
-	VIC.addr = 0b00011000;
-	bzero(BITMAP_RAM, SCREENSIZE*8);
-	bzero(SCREEN_RAM, SCREENSIZE);
+	VIC.addr = 0b01111000;
 	SCREEN_RAM[0] = (COLOR_LIGHTBLUE<<4) | COLOR_WHITE;
 	SCREEN_RAM[1] = (COLOR_LIGHTBLUE<<4) | COLOR_WHITE;
 	SCREEN_RAM[2] = (COLOR_LIGHTBLUE<<4) | COLOR_WHITE;
@@ -338,7 +364,7 @@ void main(void) {
 
 	VIC.ctrl1 = (VIC.ctrl1&0b10011111)|0b00000000;
 	VIC.ctrl2 = (VIC.ctrl2&0b11101111)|0b00000000;
-	VIC.addr = 0b00010100;
+	VIC.addr = 0b01110100;
 	memset(SCREEN_RAM, 96, SCREENSIZE);
 	memset(COLOR_RAM, COLOR_WHITE, SCREENSIZE);
 	COLOR_RAM[10*SCREENWIDTH+20] = COLOR_YELLOW;
