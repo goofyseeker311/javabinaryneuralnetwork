@@ -9,13 +9,13 @@
 #include <string.h>
 #include <tgi.h>
 
-typedef struct {
+typedef struct vector {
 	int x, y;
 } vec;
-typedef struct {
+typedef struct pointray {
 	vec pos, dir;
 } ray;
-typedef struct {
+typedef struct entity {
 	vec pos, dir, rgt;
 	int angfwd, angrgt;
 	int indfwd, indrgt;
@@ -36,11 +36,11 @@ const unsigned char tgipalette[2] = {TGI_COLOR_BLACK, TGI_COLOR_LIGHTBLUE};
 #define JIFFY_CLOCK ((unsigned char*)0x00A0)
 #define TEXT_RAM ((unsigned char*)0x0400)
 #define CHARACTER_RAM ((unsigned char*)0x3800)
-#define SCREEN_RAM ((unsigned char*)0x9C00)
-#define BITMAP_RAM ((unsigned char*)0xA000)
 #define TILEDROOM ((unsigned char*)0x4000)
 #define TILEDSDF ((unsigned char*)0x5000)
 #define RAYTABLE ((vec*)0x6000)
+#define SCREEN_RAM ((unsigned char*)0x9C00)
+#define BITMAP_RAM ((unsigned char*)0xA000)
 #define CHARACTER_ROM ((unsigned char*)0xD000)
 
 bool f=false;
@@ -49,13 +49,13 @@ char x=0, y=0, z=0, w=0, a=0, b=0;
 unsigned int k=0, q=0, r=0, s=0, t=0;
 unsigned char l=0, m=0, n=0, o=0, p=0, u=0, v=0;
 unsigned char c1=0, c2=0, c3=0, v1=0, v2=0, v3=0;
-unsigned long time1, time2, timedif;
+unsigned long time1=0, time2=0, timedif=0;
 unsigned char shufflestep = 0;
 char *ostr = "key:          ";
 struct mouse_info mouseinfo, mouseold;
 unsigned char joycount;
 
-ent player = {2<<FPS,3<<FPS,1<<FPS,0<<FPS,0<<FPS,1<<FPS,30,0};
+ent player = {2<<FPS,3<<FPS,1<<FPS,0<<FPS,0<<FPS,1<<FPS,30,0,0,0};
 ray screenray = {0};
 
 unsigned long gettime() {
@@ -201,22 +201,6 @@ void handlejoystick() {
 	}
 }
 
-void cvlineccxy(unsigned char xpos, unsigned char len, unsigned char charv1, unsigned char charc1, unsigned char charv2, unsigned char charc2, unsigned char charv3, unsigned char charc3) {
-	q = xpos;
-	for (u=0;u<len;q+=40,u++) {
-		TEXT_RAM[q] = charv1;
-		COLOR_RAM[q] = charc1;
-	}
-	for (u=0;u<(24-len-len);q+=40,u++) {
-		TEXT_RAM[q] = charv2;
-		COLOR_RAM[q] = charc2;
-	}
-	for (u=0;u<len;q+=40,u++) {
-		TEXT_RAM[q] = charv3;
-		COLOR_RAM[q] = charc3;
-	}
-}
-
 void drawvline(bool hit) {
 	p = o>>1;
 	if (p>12) {
@@ -251,7 +235,19 @@ void drawvline(bool hit) {
 			break;
 		}
 	}
-	cvlineccxy(l, p, v1, c1, v2, c2, v3, c3);
+	q = l;
+	for (u=0;u<p;q+=40,u++) {
+		TEXT_RAM[q] = v1;
+		COLOR_RAM[q] = c1;
+	}
+	for (u=0;u<(24-p-p);q+=40,u++) {
+		TEXT_RAM[q] = v2;
+		COLOR_RAM[q] = c2;
+	}
+	for (u=0;u<p;q+=40,u++) {
+		TEXT_RAM[q] = v3;
+		COLOR_RAM[q] = c3;
+	}
 }
 
 void main(void) {
@@ -293,6 +289,7 @@ void main(void) {
 	textcolor(COLOR_WHITE);
 	clrscr();
 	while (w==0) {
+		time1 = gettime();
 		handlekeyboard();
 		handlemouse();
 		handlejoystick();
@@ -300,7 +297,6 @@ void main(void) {
 		if (shufflestep>=8) {
 			shufflestep-=8;
 		}
-		time1 = gettime();
 		k = player.indfwd + (SCREENWIDTH-1);
 		for (l=shufflestep;l<SCREENWIDTH;l+=8) {
 			screenray.pos = player.pos;
@@ -331,8 +327,8 @@ void main(void) {
 		}
 		time2 = gettime();
 		timedif = time2 - time1;
-		sprintf(ostr, "jcd: %u    ",timedif);
-		cputsxy(20, 24, ostr);
+		sprintf(ostr, "jcd: %u     ",timedif);
+		cputsxy(25, 24, ostr);
 	}
 	cgetc();
 
