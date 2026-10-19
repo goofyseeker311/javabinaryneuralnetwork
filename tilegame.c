@@ -34,12 +34,14 @@ const unsigned char tgipalette[2] = {TGI_COLOR_BLACK, TGI_COLOR_LIGHTBLUE};
 #define FPS 8
 #define CHARACTER_ROM_CONFIG ((unsigned char*)0x0001)
 #define JIFFY_CLOCK ((unsigned char*)0x00A0)
-#define TEXT_RAM ((unsigned char*)0x0400)
+#define DEFAULT_TEXT_RAM ((unsigned char*)0x0400)
 #define CHARACTER_RAM ((unsigned char*)0x3800)
 #define TILEDROOM ((unsigned char*)0x4000)
 #define TILEDSDF ((unsigned char*)0x5000)
 #define RAYTABLE ((vec*)0x6000)
-#define SCREEN_RAM ((unsigned char*)0x9C00)
+#define TEXT_RAM ((unsigned char*)0x8800)
+#define SCREEN_RAM ((unsigned char*)0x8C00)
+#define IMAGE_RAM ((unsigned char*)0x9C00)
 #define BITMAP_RAM ((unsigned char*)0xA000)
 #define CHARACTER_ROM ((unsigned char*)0xD000)
 
@@ -237,15 +239,15 @@ void drawvline(bool hit) {
 	}
 	q = l;
 	for (u=0;u<p;q+=40,u++) {
-		TEXT_RAM[q] = v1;
+		DEFAULT_TEXT_RAM[q] = v1;
 		COLOR_RAM[q] = c1;
 	}
 	for (u=0;u<(24-p-p);q+=40,u++) {
-		TEXT_RAM[q] = v2;
+		DEFAULT_TEXT_RAM[q] = v2;
 		COLOR_RAM[q] = c2;
 	}
 	for (u=0;u<p;q+=40,u++) {
-		TEXT_RAM[q] = v3;
+		DEFAULT_TEXT_RAM[q] = v3;
 		COLOR_RAM[q] = c3;
 	}
 }
@@ -257,6 +259,7 @@ void main(void) {
 	bzero(TILEDROOM, TILEDSIZE);
 	bzero(TILEDSDF, TILEDSIZE);
 	bzero(RAYTABLE, RAYSIZE*4);
+	bzero(TEXT_RAM, SCREENSIZE);
 	bzero(SCREEN_RAM, SCREENSIZE);
 	bzero(BITMAP_RAM, SCREENSIZE*8);
 	k = loadfile("tiledroom", (unsigned)TILEDROOM);
@@ -268,9 +271,10 @@ void main(void) {
 	k = loadfile("tiledata2", (unsigned)RAYTABLE);
 	l = cbm_k_readst();
 	printf("lf2: %u - %u: %d, %d, %d, %d\n",l,k,RAYTABLE[0].x,RAYTABLE[0].y,RAYTABLE[1].x,RAYTABLE[1].y);
-	k = loadfile("tileimage", (unsigned)SCREEN_RAM);
+	k = loadfile("tileimage", (unsigned)IMAGE_RAM);
 	l = cbm_k_readst();
-	printf("lf3: %u - %u: %d, %d, %d, %d\n",l,k,SCREEN_RAM[0],SCREEN_RAM[1],SCREEN_RAM[2],SCREEN_RAM[3]);
+	printf("lf3: %u - %u: %d, %d, %d, %d\n",l,k,IMAGE_RAM[0],IMAGE_RAM[1],IMAGE_RAM[2],IMAGE_RAM[3]);
+	memcpy(SCREEN_RAM, IMAGE_RAM, SCREENSIZE);
 	cputcxy(0,0,'a');
 	cgetc();
 
@@ -352,7 +356,7 @@ void main(void) {
 	CIA2.pra = (CIA2.pra&0b11111100)|0b01;
 	VIC.ctrl1 = (VIC.ctrl1&0b10011111)|0b00100000;
 	VIC.ctrl2 = (VIC.ctrl2&0b11101111)|0b00000000;
-	VIC.addr = 0b01111000;
+	VIC.addr = 0b00111000;
 	SCREEN_RAM[0] = (COLOR_LIGHTBLUE<<4) | COLOR_WHITE;
 	SCREEN_RAM[1] = (COLOR_LIGHTBLUE<<4) | COLOR_WHITE;
 	SCREEN_RAM[2] = (COLOR_LIGHTBLUE<<4) | COLOR_WHITE;
@@ -373,13 +377,13 @@ void main(void) {
 
 	VIC.ctrl1 = (VIC.ctrl1&0b10011111)|0b00000000;
 	VIC.ctrl2 = (VIC.ctrl2&0b11101111)|0b00000000;
-	VIC.addr = 0b01110100;
-	memset(SCREEN_RAM, 96, SCREENSIZE);
+	VIC.addr = 0b00100100;
 	memset(COLOR_RAM, COLOR_WHITE, SCREENSIZE);
+	memset(TEXT_RAM, 96, SCREENSIZE);
 	COLOR_RAM[10*SCREENWIDTH+20] = COLOR_YELLOW;
-	SCREEN_RAM[10*SCREENWIDTH+20] = 91;
+	TEXT_RAM[10*SCREENWIDTH+20] = 91;
 	COLOR_RAM[20*SCREENWIDTH+30] = COLOR_RED;
-	SCREEN_RAM[20*SCREENWIDTH+30] = 1;
+	TEXT_RAM[20*SCREENWIDTH+30] = 1;
 	cgetc();
 
 	CIA2.pra = (CIA2.pra&0b11111100)|0b11;
