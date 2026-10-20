@@ -10,7 +10,7 @@
 #include <tgi.h>
 
 typedef struct vector {
-	int x, y;
+	signed char x, y;
 } vec;
 typedef struct pointray {
 	vec pos, dir;
@@ -27,11 +27,11 @@ const unsigned char tgipalette[2] = {TGI_COLOR_BLACK, TGI_COLOR_LIGHTBLUE};
 #define SCREENWIDTH 40
 #define SCREENHEIGHT 25
 #define SCREENSIZE 1000
-#define TILEDDIM 64
-#define TILEDSIZE 4096
+#define TILEDDIM 16
+#define TILEDSIZE 256
 #define RAYCOUNT 256
 #define RAYSIZE 512
-#define FPS 8
+#define FPS 3
 #define CHARACTER_ROM_CONFIG ((unsigned char*)0x0001)
 #define JIFFY_CLOCK ((unsigned char*)0x00A0)
 #define DEFAULT_TEXT_RAM ((unsigned char*)0x0400)
@@ -310,11 +310,11 @@ void main(void) {
 			do {
 				x = screenray.pos.x>>FPS;
 				y = screenray.pos.y>>FPS;
-				if (((x&0b11000000)==0)&&((y&0b11000000)==0)) {
-					i = (y<<6)+x;
-					m = TILEDROOM[i];
+				if (((x&0b11110000)==0)&&((y&0b11110000)==0)) {
+					u = (y<<4)+x;
+					m = TILEDROOM[u];
 					if (m==0) {
-						n = TILEDSDF[i];
+						n = TILEDSDF[u];
 						screenray.pos.x += screenray.dir.x<<n;
 						screenray.pos.y += screenray.dir.y<<n;
 						o += 1<<n;
