@@ -9,6 +9,9 @@
 #include <string.h>
 #include <tgi.h>
 
+#undef DYN_DRV
+#define DYN_DRV 0
+
 typedef struct vector {
 	signed char x, y;
 } vec;
@@ -17,12 +20,13 @@ typedef struct pointray {
 } ray;
 typedef struct entity {
 	vec pos, dir, rgt;
-	signed char angfwd, angrgt;
-	signed char indfwd, indrgt;
+	int angfwd, angrgt;
+	int indfwd, indrgt;
 } ent;
 
 const unsigned char tgipalette[2] = {TGI_COLOR_BLACK, TGI_COLOR_LIGHTBLUE};
 
+#define DYN_DRV 0
 #define CHARACTERSIZE 0x800
 #define SCREENWIDTH 40
 #define SCREENHEIGHT 25
@@ -57,7 +61,7 @@ char *ostr = "key:          ";
 struct mouse_info mouseinfo, mouseold;
 unsigned char joycount;
 
-ent player = {2<<FPS,3<<FPS,1<<FPS,0<<FPS,0<<FPS,1<<FPS,6,0,0,0};
+ent player = {2<<FPS,3<<FPS,1<<FPS,0<<FPS,0<<FPS,1<<FPS,30,0,0,0};
 ray screenray = {0};
 
 unsigned long gettime() {
@@ -72,19 +76,19 @@ unsigned int loadfile(const char* filename, unsigned memory) {
 
 void changeplayerdir() {
 	if (player.angfwd<0) {
-		player.angfwd = 7;
-	} else if (player.angfwd>7) {
+		player.angfwd = 31;
+	} else if (player.angfwd>31) {
 		player.angfwd = 0;
 	}
 	if (player.angrgt<0) {
-		player.angrgt = 7;
-	} else if (player.angrgt>7) {
+		player.angrgt = 31;
+	} else if (player.angrgt>31) {
 		player.angrgt = 0;
 	}
-	player.indfwd = player.angfwd<<4;
-	player.dir = RAYTABLE[player.indfwd+8];
-	player.indrgt = player.angrgt<<4;
-	player.rgt = RAYTABLE[player.indrgt+8];
+	player.indfwd = (player.angfwd<<5) + (player.angfwd<<3);
+	player.dir = RAYTABLE[player.indfwd+20];
+	player.indrgt = (player.angrgt<<5) + (player.angrgt<<3);
+	player.rgt = RAYTABLE[player.indrgt+20];
 }
 
 void handlekeyboard() {
@@ -181,11 +185,27 @@ void handlejoystick() {
 					changeplayerdir();
 					sprintf(ostr, "joy: rgt.    ");
 				break;
+				case JOY_UP_MASK|JOY_RIGHT_MASK:
+					player.pos.x += player.dir.x;
+					player.pos.y += player.dir.y;
+					player.angfwd += 1;
+					player.angrgt += 1;
+					changeplayerdir();
+					sprintf(ostr, "joy: fwr.    ");
+				break;
 				case JOY_LEFT_MASK:
 					player.angfwd -= 1;
 					player.angrgt -= 1;
 					changeplayerdir();
 					sprintf(ostr, "joy: lft.    ");
+				break;
+				case JOY_UP_MASK|JOY_LEFT_MASK:
+					player.pos.x += player.dir.x;
+					player.pos.y += player.dir.y;
+					player.angfwd -= 1;
+					player.angrgt -= 1;
+					changeplayerdir();
+					sprintf(ostr, "joy: fwl.    ");
 				break;
 				case JOY_RIGHT_MASK|JOY_DOWN_MASK:
 					player.pos.x += player.rgt.x;
@@ -196,6 +216,9 @@ void handlejoystick() {
 					player.pos.x -= player.rgt.x;
 					player.pos.y -= player.rgt.y;
 					sprintf(ostr, "joy: slt.    ");
+				break;
+				default:
+					sprintf(ostr, "joy: %u ",u);
 				break;
 			}
 			cputsxy(0, 24, ostr);
@@ -301,10 +324,10 @@ void main(void) {
 		if (shufflestep>=8) {
 			shufflestep-=8;
 		}
-		v = player.indfwd + 12 + 15;
-		for (l=shufflestep+12;l<16+12;l+=8) {
+		k = player.indfwd + (SCREENWIDTH-1);
+		for (l=shufflestep;l<SCREENWIDTH;l+=8) {
 			screenray.pos = player.pos;
-			screenray.dir = RAYTABLE[v-l];
+			screenray.dir = RAYTABLE[k-l];
 			f = false;
 			o = 0;
 			do {

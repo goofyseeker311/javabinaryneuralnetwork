@@ -26,8 +26,8 @@ fclose(fn);
 
 fov = 70 * pi/180;
 len = atan(fov);
-drs = 8;
-stp = 16;
+drs = 32;
+stp = 40;
 a2 = len*(-1:2/(stp-1):1);
 b2 = [a2;ones(size(a2))];
 b3 = vectordirection(b2);
