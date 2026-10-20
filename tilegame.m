@@ -24,9 +24,10 @@ fwrite(fn,cast(0x6000,'uint16'),'uint16',0,'l');
 fwrite(fn,cast(d','int8'),'int8',0,'l');
 fclose(fn);
 
-fov = 90 * pi/180;
+fov = 70 * pi/180;
 len = atan(fov);
-stp = 40;
+drs = 8;
+stp = 16;
 a2 = len*(-1:2/(stp-1):1);
 b2 = [a2;ones(size(a2))];
 b3 = vectordirection(b2);
@@ -34,8 +35,8 @@ b3 = vectordirection(b2);
 b4a = a(:,b3i);
 figure(3); scatter(b4a(1,:),b4a(2,:));
 b2a = [];
-for n = 1:stp
-  rz = rotz((n-1)/stp*360);
+for n = 1:drs
+  rz = rotz((n-1)/drs*360);
   rz = rz(1:2,1:2);
   rd = rz*b2;
   rd2 = vectordirection(rd);

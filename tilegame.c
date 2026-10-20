@@ -17,8 +17,8 @@ typedef struct pointray {
 } ray;
 typedef struct entity {
 	vec pos, dir, rgt;
-	int angfwd, angrgt;
-	int indfwd, indrgt;
+	signed char angfwd, angrgt;
+	signed char indfwd, indrgt;
 } ent;
 
 const unsigned char tgipalette[2] = {TGI_COLOR_BLACK, TGI_COLOR_LIGHTBLUE};
@@ -57,7 +57,7 @@ char *ostr = "key:          ";
 struct mouse_info mouseinfo, mouseold;
 unsigned char joycount;
 
-ent player = {2<<FPS,3<<FPS,1<<FPS,0<<FPS,0<<FPS,1<<FPS,30,0,0,0};
+ent player = {2<<FPS,3<<FPS,1<<FPS,0<<FPS,0<<FPS,1<<FPS,6,0,0,0};
 ray screenray = {0};
 
 unsigned long gettime() {
@@ -72,19 +72,19 @@ unsigned int loadfile(const char* filename, unsigned memory) {
 
 void changeplayerdir() {
 	if (player.angfwd<0) {
-		player.angfwd = 39;
-	} else if (player.angfwd>39) {
+		player.angfwd = 7;
+	} else if (player.angfwd>7) {
 		player.angfwd = 0;
 	}
 	if (player.angrgt<0) {
-		player.angrgt = 39;
-	} else if (player.angrgt>39) {
+		player.angrgt = 7;
+	} else if (player.angrgt>7) {
 		player.angrgt = 0;
 	}
-	player.indfwd = (player.angfwd<<3)+(player.angfwd<<5);
-	player.dir = RAYTABLE[player.indfwd+20];
-	player.indrgt = (player.angrgt<<3)+(player.angrgt<<5);
-	player.rgt = RAYTABLE[player.indrgt+20];
+	player.indfwd = player.angfwd<<4;
+	player.dir = RAYTABLE[player.indfwd+8];
+	player.indrgt = player.angrgt<<4;
+	player.rgt = RAYTABLE[player.indrgt+8];
 }
 
 void handlekeyboard() {
@@ -301,10 +301,10 @@ void main(void) {
 		if (shufflestep>=8) {
 			shufflestep-=8;
 		}
-		k = player.indfwd + (SCREENWIDTH-1);
-		for (l=shufflestep;l<SCREENWIDTH;l+=8) {
+		v = player.indfwd + 12 + 15;
+		for (l=shufflestep+12;l<16+12;l+=8) {
 			screenray.pos = player.pos;
-			screenray.dir = RAYTABLE[k-l];
+			screenray.dir = RAYTABLE[v-l];
 			f = false;
 			o = 0;
 			do {
