@@ -38,11 +38,10 @@ const unsigned char tgipalette[2] = {TGI_COLOR_BLACK, TGI_COLOR_LIGHTBLUE};
 #define FPS 3
 #define CHARACTER_ROM_CONFIG ((unsigned char*)0x0001)
 #define JIFFY_CLOCK ((unsigned char*)0x00A0)
-#define DEFAULT_TEXT_RAM ((unsigned char*)0x0400)
-#define CHARACTER_RAM ((unsigned char*)0x3800)
 #define TILEDROOM ((unsigned char*)0x4000)
 #define TILEDSDF ((unsigned char*)0x5000)
 #define RAYTABLE ((vec*)0x6000)
+#define CHARACTER_RAM ((unsigned char*)0x8000)
 #define TEXT_RAM ((unsigned char*)0x8800)
 #define SCREEN_RAM ((unsigned char*)0x8C00)
 #define IMAGE_RAM ((unsigned char*)0x9C00)
@@ -261,17 +260,53 @@ void drawvline(bool hit) {
 		}
 	}
 	q = l;
-	for (u=0;u<p;q+=40,u++) {
-		DEFAULT_TEXT_RAM[q] = v1;
-		COLOR_RAM[q] = c1;
+	switch(p) {
+		case 12: TEXT_RAM[q] = v1; COLOR_RAM[q] = c1; q+=40;
+		case 11: TEXT_RAM[q] = v1; COLOR_RAM[q] = c1; q+=40;
+		case 10: TEXT_RAM[q] = v1; COLOR_RAM[q] = c1; q+=40;
+		case  9: TEXT_RAM[q] = v1; COLOR_RAM[q] = c1; q+=40;
+		case  8: TEXT_RAM[q] = v1; COLOR_RAM[q] = c1; q+=40;
+		case  7: TEXT_RAM[q] = v1; COLOR_RAM[q] = c1; q+=40;
+		case  6: TEXT_RAM[q] = v1; COLOR_RAM[q] = c1; q+=40;
+		case  5: TEXT_RAM[q] = v1; COLOR_RAM[q] = c1; q+=40;
+		case  4: TEXT_RAM[q] = v1; COLOR_RAM[q] = c1; q+=40;
+		case  3: TEXT_RAM[q] = v1; COLOR_RAM[q] = c1; q+=40;
+		case  2: TEXT_RAM[q] = v1; COLOR_RAM[q] = c1; q+=40;
+		case  1: TEXT_RAM[q] = v1; COLOR_RAM[q] = c1; q+=40;
+		default:
+		case  0: break;
 	}
-	for (u=0;u<(24-p-p);q+=40,u++) {
-		DEFAULT_TEXT_RAM[q] = v2;
-		COLOR_RAM[q] = c2;
+	switch(p) {
+		case  0: TEXT_RAM[q] = v2; COLOR_RAM[q] = c2; q+=40; TEXT_RAM[q] = v2; COLOR_RAM[q] = c2; q+=40;
+		case  1: TEXT_RAM[q] = v2; COLOR_RAM[q] = c2; q+=40; TEXT_RAM[q] = v2; COLOR_RAM[q] = c2; q+=40;
+		case  2: TEXT_RAM[q] = v2; COLOR_RAM[q] = c2; q+=40; TEXT_RAM[q] = v2; COLOR_RAM[q] = c2; q+=40;
+		case  3: TEXT_RAM[q] = v2; COLOR_RAM[q] = c2; q+=40; TEXT_RAM[q] = v2; COLOR_RAM[q] = c2; q+=40;
+		case  4: TEXT_RAM[q] = v2; COLOR_RAM[q] = c2; q+=40; TEXT_RAM[q] = v2; COLOR_RAM[q] = c2; q+=40;
+		case  5: TEXT_RAM[q] = v2; COLOR_RAM[q] = c2; q+=40; TEXT_RAM[q] = v2; COLOR_RAM[q] = c2; q+=40;
+		case  6: TEXT_RAM[q] = v2; COLOR_RAM[q] = c2; q+=40; TEXT_RAM[q] = v2; COLOR_RAM[q] = c2; q+=40;
+		case  7: TEXT_RAM[q] = v2; COLOR_RAM[q] = c2; q+=40; TEXT_RAM[q] = v2; COLOR_RAM[q] = c2; q+=40;
+		case  8: TEXT_RAM[q] = v2; COLOR_RAM[q] = c2; q+=40; TEXT_RAM[q] = v2; COLOR_RAM[q] = c2; q+=40;
+		case  9: TEXT_RAM[q] = v2; COLOR_RAM[q] = c2; q+=40; TEXT_RAM[q] = v2; COLOR_RAM[q] = c2; q+=40;
+		case 10: TEXT_RAM[q] = v2; COLOR_RAM[q] = c2; q+=40; TEXT_RAM[q] = v2; COLOR_RAM[q] = c2; q+=40;
+		case 11: TEXT_RAM[q] = v2; COLOR_RAM[q] = c2; q+=40; TEXT_RAM[q] = v2; COLOR_RAM[q] = c2; q+=40;
+		default:
+		case 12: break;
 	}
-	for (u=0;u<p;q+=40,u++) {
-		DEFAULT_TEXT_RAM[q] = v3;
-		COLOR_RAM[q] = c3;
+	switch(p) {
+		case 12: TEXT_RAM[q] = v3; COLOR_RAM[q] = c3; q+=40;
+		case 11: TEXT_RAM[q] = v3; COLOR_RAM[q] = c3; q+=40;
+		case 10: TEXT_RAM[q] = v3; COLOR_RAM[q] = c3; q+=40;
+		case  9: TEXT_RAM[q] = v3; COLOR_RAM[q] = c3; q+=40;
+		case  8: TEXT_RAM[q] = v3; COLOR_RAM[q] = c3; q+=40;
+		case  7: TEXT_RAM[q] = v3; COLOR_RAM[q] = c3; q+=40;
+		case  6: TEXT_RAM[q] = v3; COLOR_RAM[q] = c3; q+=40;
+		case  5: TEXT_RAM[q] = v3; COLOR_RAM[q] = c3; q+=40;
+		case  4: TEXT_RAM[q] = v3; COLOR_RAM[q] = c3; q+=40;
+		case  3: TEXT_RAM[q] = v3; COLOR_RAM[q] = c3; q+=40;
+		case  2: TEXT_RAM[q] = v3; COLOR_RAM[q] = c3; q+=40;
+		case  1: TEXT_RAM[q] = v3; COLOR_RAM[q] = c3; q+=40;
+		default:
+		case  0: break;
 	}
 }
 
@@ -304,13 +339,24 @@ void main(void) {
 	CIA1.cra = CIA1.cra&0xFE;
 	CHARACTER_ROM_CONFIG[0] = CHARACTER_ROM_CONFIG[0]&0xFB;
 	memcpy(CHARACTER_RAM, CHARACTER_ROM+0x800, CHARACTERSIZE);
+	CHARACTER_ROM_CONFIG[0] = CHARACTER_ROM_CONFIG[0]|0x4;
+	CIA1.cra = CIA1.cra|0x1;
 	for (l=0;l<8;l+=2) {
 		CHARACTER_RAM[744+l+0] = 0xaa;
 		CHARACTER_RAM[744+l+1] = 0x55;
 	}
-	CHARACTER_ROM_CONFIG[0] = CHARACTER_ROM_CONFIG[0]|0x4;
-	CIA1.cra = CIA1.cra|0x1;
-	VIC.addr = 0b00011110;
+	CIA2.pra = (CIA2.pra&0b11111100)|0b01;
+	VIC.ctrl1 = (VIC.ctrl1&0b10011111)|0b00000000;
+	VIC.ctrl2 = (VIC.ctrl2&0b11101111)|0b00000000;
+	VIC.addr = 0b00100000;
+	memset(COLOR_RAM, COLOR_WHITE, SCREENSIZE);
+	memset(TEXT_RAM, 96, SCREENSIZE);
+	COLOR_RAM[10*SCREENWIDTH+20] = COLOR_YELLOW;
+	TEXT_RAM[10*SCREENWIDTH+20] = 91;
+	COLOR_RAM[20*SCREENWIDTH+30] = COLOR_RED;
+	TEXT_RAM[20*SCREENWIDTH+30] = 1;
+	cgetc();
+
 	bordercolor(COLOR_BLACK);
 	bgcolor(COLOR_GRAY1);
 	textcolor(COLOR_WHITE);
@@ -359,6 +405,7 @@ void main(void) {
 	}
 	cgetc();
 
+	CIA2.pra = (CIA2.pra&0b11111100)|0b11;
 	VIC.addr = 0b00010110;
 	bgcolor(COLOR_ORANGE);
 	bordercolor(COLOR_CYAN);
@@ -396,17 +443,6 @@ void main(void) {
 	BITMAP_RAM[5] = 0xFF;
 	BITMAP_RAM[6] = 0xAA;
 	BITMAP_RAM[7] = 0xFF;
-	cgetc();
-
-	VIC.ctrl1 = (VIC.ctrl1&0b10011111)|0b00000000;
-	VIC.ctrl2 = (VIC.ctrl2&0b11101111)|0b00000000;
-	VIC.addr = 0b00100100;
-	memset(COLOR_RAM, COLOR_WHITE, SCREENSIZE);
-	memset(TEXT_RAM, 96, SCREENSIZE);
-	COLOR_RAM[10*SCREENWIDTH+20] = COLOR_YELLOW;
-	TEXT_RAM[10*SCREENWIDTH+20] = 91;
-	COLOR_RAM[20*SCREENWIDTH+30] = COLOR_RED;
-	TEXT_RAM[20*SCREENWIDTH+30] = 1;
 	cgetc();
 
 	CIA2.pra = (CIA2.pra&0b11111100)|0b11;
