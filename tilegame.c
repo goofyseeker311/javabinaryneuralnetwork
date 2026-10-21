@@ -38,6 +38,7 @@ const unsigned char tgipalette[2] = {TGI_COLOR_BLACK, TGI_COLOR_LIGHTBLUE};
 #define FPS 3
 #define CHARACTER_ROM_CONFIG ((unsigned char*)0x0001)
 #define JIFFY_CLOCK ((unsigned char*)0x00A0)
+#define DEFAULT_TEXT_RAM ((unsigned char*)0x0400)
 #define TILEDROOM ((unsigned char*)0x4000)
 #define TILEDSDF ((unsigned char*)0x5000)
 #define RAYTABLE ((vec*)0x6000)
@@ -402,6 +403,7 @@ void main(void) {
 		timedif = time2 - time1;
 		sprintf(ostr, "jcd: %u     ",timedif);
 		cputsxy(25, 24, ostr);
+		memcpy(TEXT_RAM+960, DEFAULT_TEXT_RAM+960, 40);
 	}
 	cgetc();
 
