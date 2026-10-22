@@ -31,10 +31,10 @@ const unsigned char tgipalette[2] = {TGI_COLOR_BLACK, TGI_COLOR_LIGHTBLUE};
 #define SCREENWIDTH 40
 #define SCREENHEIGHT 25
 #define SCREENSIZE 1000
-#define TILEDDIM 16
-#define TILEDSIZE 256
-#define RAYCOUNT 256
-#define RAYSIZE 512
+#define TILEDDIM 32
+#define TILEDSIZE 1024
+#define RAYCOUNT 1280
+#define RAYSIZE 2560
 #define FPS 3
 #define CHARACTER_ROM_CONFIG ((unsigned char*)0x0001)
 #define JIFFY_CLOCK ((unsigned char*)0x00A0)
@@ -51,12 +51,14 @@ const unsigned char tgipalette[2] = {TGI_COLOR_BLACK, TGI_COLOR_LIGHTBLUE};
 
 bool f=false;
 int i=0, j=0, c=0, d=0;
-char x=0, y=0, z=0, w=0, a=0, b=0;
+signed char x=0, y=0, z=0, w=0;
+char a=0, b=0;
 unsigned int k=0, q=0, r=0, s=0, t=0;
 unsigned char l=0, m=0, n=0, o=0, p=0, u=0, v=0;
 unsigned char c1=0, c2=0, c3=0, v1=0, v2=0, v3=0;
 unsigned long time1=0, time2=0, timedif=0;
 unsigned char shufflestep = 0;
+unsigned char FPSmask = 0b1111111<<(8-FPS);
 char *ostr = "key:          ";
 struct mouse_info mouseinfo, mouseold;
 unsigned char joycount;
@@ -317,7 +319,7 @@ void main(void) {
 
 	bzero(TILEDROOM, TILEDSIZE);
 	bzero(TILEDSDF, TILEDSIZE);
-	bzero(RAYTABLE, RAYSIZE*4);
+	bzero(RAYTABLE, RAYSIZE);
 	bzero(TEXT_RAM, SCREENSIZE);
 	bzero(SCREEN_RAM, SCREENSIZE);
 	bzero(BITMAP_RAM, SCREENSIZE*8);
@@ -378,24 +380,18 @@ void main(void) {
 			f = false;
 			o = 0;
 			do {
-				x = screenray.pos.x>>FPS;
-				y = screenray.pos.y>>FPS;
-				if (((x&0b11110000)==0)&&((y&0b11110000)==0)) {
-					u = (y<<4)+x;
-					m = TILEDROOM[u];
-					if (m==0) {
-						n = TILEDSDF[u];
-						screenray.pos.x += screenray.dir.x<<n;
-						screenray.pos.y += screenray.dir.y<<n;
-						o += 1<<n;
-					} else {
-						f = true;
-						drawvline(true);
-					}
+				x = screenray.pos.x>>FPS; if (screenray.pos.x<0) {x = x | FPSmask;}
+				y = screenray.pos.y>>FPS; if (screenray.pos.y<0) {y = y | FPSmask;}
+				i = ((y+16)<<5)+(x+16);
+				m = TILEDROOM[i];
+				if (m==0) {
+					n = TILEDSDF[i];
+					screenray.pos.x += screenray.dir.x<<n;
+					screenray.pos.y += screenray.dir.y<<n;
+					o += 1<<n;
 				} else {
 					f = true;
-					m = 255;
-					drawvline(false);
+					drawvline(true);
 				}
 			} while(!f);
 		}
