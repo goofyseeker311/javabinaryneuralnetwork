@@ -19,7 +19,7 @@ typedef struct pointray {
 	vec pos, dir;
 } ray;
 typedef struct entity {
-	vec pos, dir, rgt;
+	vec pos, dir, rgt, loc;
 	int angfwd, angrgt;
 	int indfwd, indrgt;
 } ent;
@@ -49,7 +49,7 @@ const unsigned char tgipalette[2] = {TGI_COLOR_BLACK, TGI_COLOR_LIGHTBLUE};
 #define BITMAP_RAM ((unsigned char*)0xA000)
 #define CHARACTER_ROM ((unsigned char*)0xD000)
 
-bool f=false;
+bool e=false, f=false;
 int i=0, j=0, c=0, d=0;
 signed char x=0, y=0, z=0, w=0;
 char a=0, b=0;
@@ -63,7 +63,7 @@ char *ostr = "key:          ";
 struct mouse_info mouseinfo, mouseold;
 unsigned char joycount;
 
-ent player = {2<<FPS,3<<FPS,0,0,1<<FPS,0<<FPS,0,0,0<<FPS,1<<FPS,0,0,30,0,0,0};
+ent player = {2<<FPS,3<<FPS,0,0,1<<FPS,0<<FPS,0,0,0<<FPS,1<<FPS,0,0,2,3,0,0,30,0,0,0};
 ray screenray = {0};
 
 unsigned long gettime() {
@@ -98,7 +98,7 @@ void handlekeyboard() {
 		a = cgetc();
 		switch (a) {
 			case 3:
-				w = 1;
+				e = true;
 				sprintf(ostr, "key: exit.   ");
 			break;
 			case 87:
@@ -229,7 +229,7 @@ void handlejoystick() {
 }
 
 void drawvline(bool hit) {
-	p = screenray.pos.l>>2;
+	p = screenray.pos.l>>4;
 	if (p>12) {
 		p = 12;
 	}
@@ -364,8 +364,10 @@ void main(void) {
 	bgcolor(COLOR_GRAY1);
 	textcolor(COLOR_WHITE);
 	clrscr();
-	while (w==0) {
+	while (!e) {
 		time1 = gettime();
+		player.loc.x = player.pos.x>>FPS; if (player.pos.x<0) {player.loc.x = player.loc.x | FPSmask;} player.loc.x += 16;
+		player.loc.y = player.pos.y>>FPS; if (player.pos.y<0) {player.loc.y = player.loc.y | FPSmask;} player.loc.y += 16;
 		handlekeyboard();
 		handlemouse();
 		handlejoystick();
@@ -397,7 +399,9 @@ void main(void) {
 		time2 = gettime();
 		timedif = time2 - time1;
 		sprintf(ostr, "jcd: %u     ",timedif);
-		cputsxy(25, 24, ostr);
+		cputsxy(30, 24, ostr);
+		sprintf(ostr, "x,y: %d,%d  ",player.loc.x,player.loc.y);
+		cputsxy(15, 24, ostr);
 		memcpy(TEXT_RAM+960, DEFAULT_TEXT_RAM+960, 40);
 	}
 	cgetc();
