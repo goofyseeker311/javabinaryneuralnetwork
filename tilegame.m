@@ -13,15 +13,24 @@ a = [flip([-a(1,:);a(2,:)],2) a];
 a = [a flip([a(1,:);-a(2,:)],2)];
 a = unique(a',"rows")';
 b = vectordirection(a);
+ba = b;
+bb = vecnorm(a);
 c = sort(b);
+ca = sort(ba);
+cb = sort(bb);
 d = round(a*2^3);
+da = round(ba*2^3);
+db = round(bb*2^3);
+f = [d;da;db];
 figure(1); plot(c,'o-'); xlim([1 176]); ylim([-pi pi]);
 figure(2); scatter(a(1,:),a(2,:));
+figure(3); plot(da,'o-'); xlim([1 176]); ylim([-25 25]);
+figure(4); plot(db,'o-'); xlim([1 176]); ylim([5 11]);
 
 fn = "tiledata.prg";
 fopen(fn,'w');
 fwrite(fn,cast(0x6000,'uint16'),'uint16',0,'l');
-fwrite(fn,cast(d','int8'),'int8',0,'l');
+fwrite(fn,cast(f','int8'),'int8',0,'l');
 fclose(fn);
 
 fov = 70 * pi/180;
@@ -33,6 +42,9 @@ b2 = [a2;ones(size(a2))];
 b3 = vectordirection(b2);
 [b3a,b3i] = min(abs(b3 - b'));
 b4a = a(:,b3i);
+b4b = vectordirection(b4a);
+b4c = vecnorm(b4a);
+b5 = [b4a; b4b; b4c];
 figure(3); scatter(b4a(1,:),b4a(2,:));
 b2a = [];
 for n = 1:drs
@@ -42,10 +54,14 @@ for n = 1:drs
   rd2 = vectordirection(rd);
   [rd3,rd3i] = min(abs(rd2 - b'));
   rd3 = a(:,rd3i);
+  rd4 = vectordirection(rd3);
+  rd5 = vecnorm(rd3);
   figure(n+3); scatter(rd3(1,:),rd3(2,:)); xlim([-1 1]); ylim([-1 1]);
   rda = [];
-  rda(1:2:size(rd3,2)*2) = rd3(1,:);
-  rda(2:2:size(rd3,2)*2) = rd3(2,:);
+  rda(1:4:size(rd3,2)*4) = rd3(1,:);
+  rda(2:4:size(rd3,2)*4) = rd3(2,:);
+  rda(3:4:size(rd4,2)*4) = rd4;
+  rda(4:4:size(rd5,2)*4) = rd5;
   b2a = [b2a; rda];
 endfor
 c2 = round(b2a*2^3);

@@ -13,7 +13,7 @@
 #define DYN_DRV 0
 
 typedef struct vector {
-	signed char x, y;
+	signed char x, y, a, l;
 } vec;
 typedef struct pointray {
 	vec pos, dir;
@@ -63,7 +63,7 @@ char *ostr = "key:          ";
 struct mouse_info mouseinfo, mouseold;
 unsigned char joycount;
 
-ent player = {2<<FPS,3<<FPS,1<<FPS,0<<FPS,0<<FPS,1<<FPS,30,0,0,0};
+ent player = {2<<FPS,3<<FPS,0,0,1<<FPS,0<<FPS,0,0,0<<FPS,1<<FPS,0,0,30,0,0,0};
 ray screenray = {0};
 
 unsigned long gettime() {
@@ -229,7 +229,7 @@ void handlejoystick() {
 }
 
 void drawvline(bool hit) {
-	p = o>>1;
+	p = screenray.pos.l>>2;
 	if (p>12) {
 		p = 12;
 	}
@@ -378,7 +378,6 @@ void main(void) {
 			screenray.pos = player.pos;
 			screenray.dir = RAYTABLE[k-l];
 			f = false;
-			o = 0;
 			do {
 				x = screenray.pos.x>>FPS; if (screenray.pos.x<0) {x = x | FPSmask;}
 				y = screenray.pos.y>>FPS; if (screenray.pos.y<0) {y = y | FPSmask;}
@@ -388,7 +387,7 @@ void main(void) {
 					n = TILEDSDF[i];
 					screenray.pos.x += screenray.dir.x<<n;
 					screenray.pos.y += screenray.dir.y<<n;
-					o += 1<<n;
+					screenray.pos.l += screenray.dir.l<<n;
 				} else {
 					f = true;
 					drawvline(true);
