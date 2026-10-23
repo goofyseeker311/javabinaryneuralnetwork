@@ -322,6 +322,7 @@ void drawvline(bool hit) {
 }
 
 void main(void) {
+	kbrepeat(KBREPEAT_ALL);
 	joy_install(joy_static_stddrv);
 	mouse_install(&mouse_def_callbacks, mouse_static_stddrv);
 
