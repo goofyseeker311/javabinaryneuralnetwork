@@ -49,6 +49,7 @@ const unsigned char tgipalette[2] = {TGI_COLOR_BLACK, TGI_COLOR_LIGHTBLUE};
 #define RAYTABLE ((vec*)0x6000)
 #define CHARACTER_RAM ((unsigned char*)0x8000)
 #define TEXT_RAM ((unsigned char*)0x8800)
+#define SPRITE_RAM ((unsigned char*)0x8BF8)
 #define SCREEN_RAM ((unsigned char*)0x8C00)
 #define COLUMN_ZBUFFER ((unsigned char*)0x9000)
 #define IMAGE_RAM ((unsigned char*)0x9C00)
@@ -344,7 +345,6 @@ void main(void) {
 	k = loadfile("tileimage", (unsigned)IMAGE_RAM);
 	l = cbm_k_readst();
 	printf("lf3: %u - %u: %d, %d, %d, %d\n",l,k,IMAGE_RAM[0],IMAGE_RAM[1],IMAGE_RAM[2],IMAGE_RAM[3]);
-	memcpy(SCREEN_RAM, IMAGE_RAM, SCREENSIZE);
 	cputcxy(0,0,'a');
 	cgetc();
 
@@ -369,10 +369,32 @@ void main(void) {
 	TEXT_RAM[20*SCREENWIDTH+30] = 1;
 	cgetc();
 
+	clrscr();
 	bordercolor(COLOR_BLACK);
 	bgcolor(COLOR_GRAY1);
 	textcolor(COLOR_WHITE);
-	clrscr();
+	memset(SCREEN_RAM, 0xff, SCREENSIZE);
+	SPRITE_RAM[0] = 48;
+	SPRITE_RAM[1] = 49;
+	SPRITE_RAM[2] = 50;
+	SPRITE_RAM[3] = 51;
+	SPRITE_RAM[4] = 52;
+	SPRITE_RAM[5] = 53;
+	SPRITE_RAM[6] = 54;
+	SPRITE_RAM[7] = 55;
+	VIC.spr0_x =  27; VIC.spr0_y =  36; VIC.spr0_color = COLOR_WHITE;
+	VIC.spr1_x = 195; VIC.spr1_y =  67; VIC.spr1_color = COLOR_BLACK;
+	VIC.spr2_x =   7; VIC.spr2_y = 121; VIC.spr2_color = COLOR_GREEN;
+	VIC.spr3_x = 132; VIC.spr3_y =  57; VIC.spr3_color = COLOR_RED;
+	VIC.spr4_x =  03; VIC.spr4_y =  10; VIC.spr4_color = COLOR_BLUE;
+	VIC.spr5_x = 211; VIC.spr5_y =  47; VIC.spr5_color = COLOR_CYAN;
+	VIC.spr6_x =  49; VIC.spr6_y = 141; VIC.spr6_color = COLOR_YELLOW;
+	VIC.spr7_x =  45; VIC.spr7_y = 153; VIC.spr7_color = COLOR_GRAY2;
+	VIC.spr_hi_x = 0b10010000;
+	VIC.spr_exp_x = 0x00;
+	VIC.spr_exp_y = 0xff;
+	VIC.spr_bg_prio = 0b10101110;
+	VIC.spr_ena = 0xff;
 	while (!e) {
 		time1 = gettime();
 		handlekeyboard();
@@ -437,6 +459,7 @@ void main(void) {
 	VIC.ctrl1 = (VIC.ctrl1&0b10011111)|0b00100000;
 	VIC.ctrl2 = (VIC.ctrl2&0b11101111)|0b00000000;
 	VIC.addr = 0b00111000;
+	memcpy(SCREEN_RAM, IMAGE_RAM, SCREENSIZE);
 	SCREEN_RAM[0] = (COLOR_LIGHTBLUE<<4) | COLOR_WHITE;
 	SCREEN_RAM[1] = (COLOR_LIGHTBLUE<<4) | COLOR_WHITE;
 	SCREEN_RAM[2] = (COLOR_LIGHTBLUE<<4) | COLOR_WHITE;
