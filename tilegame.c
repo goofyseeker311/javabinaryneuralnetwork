@@ -61,7 +61,7 @@ char a=0, b=0;
 unsigned int k=0, q=0, r=0, s=0, t=0;
 unsigned char l=0, m=0, n=0, o=0, p=0, u=0, v=0;
 unsigned char c1=0, c2=0, c3=0, v1=0, v2=0, v3=0;
-unsigned long time1=0, time2=0, timedif=0;
+long time1=0, time2=0, timedif=0;
 unsigned char shufflestep = 0;
 unsigned char FPSmask = 0b1111111<<(8-FPS);
 char *ostr = "key:          ";
@@ -71,8 +71,8 @@ unsigned char joycount;
 ent player = {2<<FPS,3<<FPS,0,0,1<<FPS,0<<FPS,0,0,0<<FPS,1<<FPS,0,0,2,3,0,0,24,0,0,0};
 ray screenray = {0};
 
-unsigned long gettime() {
-	return (((long)JIFFY_CLOCK[2])<<16) | (JIFFY_CLOCK[1]<<8) | JIFFY_CLOCK[0];
+long gettime() {
+	return (((long)JIFFY_CLOCK[2])<<16) | (((long)JIFFY_CLOCK[1])<<8) | ((long)JIFFY_CLOCK[0]);
 }
 
 unsigned int loadfile(const char* filename, unsigned memory) {
@@ -406,7 +406,7 @@ void main(void) {
 		}
 		time2 = gettime();
 		timedif = time2 - time1;
-		sprintf(ostr, "jcd: %u     ",timedif);
+		sprintf(ostr, "jcd: %d     ",timedif);
 		cputsxy(30, 24, ostr);
 		sprintf(ostr, "x,y: %u,%u  ",player.loc.x.u,player.loc.y.u);
 		cputsxy(15, 24, ostr);
