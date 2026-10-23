@@ -27,6 +27,7 @@ typedef struct entity {
 	vec pos, dir, rgt, loc;
 	int angfwd, angrgt;
 	int indfwd, indrgt;
+	unsigned char movement;
 } ent;
 
 const unsigned char tgipalette[2] = {TGI_COLOR_BLACK, TGI_COLOR_LIGHTBLUE};
@@ -81,23 +82,6 @@ unsigned int loadfile(const char* filename, unsigned memory) {
 	return cbm_k_load(0, memory);
 }
 
-void changeplayerdir() {
-	if (player.angfwd<0) {
-		player.angfwd = 31;
-	} else if (player.angfwd>31) {
-		player.angfwd = 0;
-	}
-	if (player.angrgt<0) {
-		player.angrgt = 31;
-	} else if (player.angrgt>31) {
-		player.angrgt = 0;
-	}
-	player.indfwd = (player.angfwd<<5) + (player.angfwd<<3);
-	player.dir = RAYTABLE[player.indfwd+20];
-	player.indrgt = (player.angrgt<<5) + (player.angrgt<<3);
-	player.rgt = RAYTABLE[player.indrgt+20];
-}
-
 void handlekeyboard() {
 	if(kbhit()!=0) {
 		a = cgetc();
@@ -108,36 +92,28 @@ void handlekeyboard() {
 			break;
 			case 87:
 			case 145:
-				player.pos.x.d += player.dir.x.d;
-				player.pos.y.d += player.dir.y.d;
+				player.movement = player.movement | 0b00000001;
 				sprintf(ostr, "key: fwd.    ");
 			break;
 			case 83:
 			case 17:
-				player.pos.x.d -= player.dir.x.d;
-				player.pos.y.d -= player.dir.y.d;
+				player.movement = player.movement | 0b00000010;
 				sprintf(ostr, "key: bck.    ");
 			break;
 			case 68:
-				player.pos.x.d += player.rgt.x.d;
-				player.pos.y.d += player.rgt.y.d;
+				player.movement = player.movement | 0b00000100;
 				sprintf(ostr, "key: srt.    ");
 			break;
 			case 65:
-				player.pos.x.d -= player.rgt.x.d;
-				player.pos.y.d -= player.rgt.y.d;
+				player.movement = player.movement | 0b00001000;
 				sprintf(ostr, "key: slt.    ");
 			break;
 			case 29:
-				player.angfwd += 1;
-				player.angrgt += 1;
-				changeplayerdir();
+				player.movement = player.movement | 0b00010000;
 				sprintf(ostr, "key: rgt.    ");
 			break;
 			case 157:
-				player.angfwd -= 1;
-				player.angrgt -= 1;
-				changeplayerdir();
+				player.movement = player.movement | 0b00100000;
 				sprintf(ostr, "key: lft.    ");
 			break;
 			default:
@@ -153,14 +129,10 @@ void handlemouse() {
 	if (mouseinfo.pos.x!=mouseold.pos.x) {
 		c = mouseinfo.pos.x - mouseold.pos.x;
 		if (c>0) {
-			player.angfwd += 1;
-			player.angrgt += 1;
-			changeplayerdir();
+			player.movement = player.movement | 0b00010000;
 			sprintf(ostr, "mse: rgt.    ");
 		} else if (c<0) {
-			player.angfwd -= 1;
-			player.angrgt -= 1;
-			changeplayerdir();
+			player.movement = player.movement | 0b00100000;
 			sprintf(ostr, "mse: lft.    ");
 		}
 		cputsxy(0, 24, ostr);
@@ -177,51 +149,35 @@ void handlejoystick() {
 		if (u!=0) {
 			switch(u) {
 				case JOY_UP_MASK:
-					player.pos.x.d += player.dir.x.d;
-					player.pos.y.d += player.dir.y.d;
+					player.movement = player.movement | 0b00000001;
 					sprintf(ostr, "joy: fwd.    ");
 				break;
 				case JOY_DOWN_MASK:
-					player.pos.x.d -= player.dir.x.d;
-					player.pos.y.d -= player.dir.y.d;
+					player.movement = player.movement | 0b00000010;
 					sprintf(ostr, "joy: bck.    ");
 				break;
 				case JOY_RIGHT_MASK:
-					player.angfwd += 1;
-					player.angrgt += 1;
-					changeplayerdir();
+					player.movement = player.movement | 0b00010000;
 					sprintf(ostr, "joy: rgt.    ");
 				break;
 				case JOY_UP_MASK|JOY_RIGHT_MASK:
-					player.pos.x.d += player.dir.x.d;
-					player.pos.y.d += player.dir.y.d;
-					player.angfwd += 1;
-					player.angrgt += 1;
-					changeplayerdir();
+					player.movement = player.movement | 0b00010001;
 					sprintf(ostr, "joy: fwr.    ");
 				break;
 				case JOY_LEFT_MASK:
-					player.angfwd -= 1;
-					player.angrgt -= 1;
-					changeplayerdir();
+					player.movement = player.movement | 0b00100000;
 					sprintf(ostr, "joy: lft.    ");
 				break;
 				case JOY_UP_MASK|JOY_LEFT_MASK:
-					player.pos.x.d += player.dir.x.d;
-					player.pos.y.d += player.dir.y.d;
-					player.angfwd -= 1;
-					player.angrgt -= 1;
-					changeplayerdir();
+					player.movement = player.movement | 0b00100001;
 					sprintf(ostr, "joy: fwl.    ");
 				break;
 				case JOY_RIGHT_MASK|JOY_DOWN_MASK:
-					player.pos.x.d += player.rgt.x.d;
-					player.pos.y.d += player.rgt.y.d;
+					player.movement = player.movement | 0b00000100;
 					sprintf(ostr, "joy: srt.    ");
 				break;
 				case JOY_LEFT_MASK|JOY_DOWN_MASK:
-					player.pos.x.d -= player.rgt.x.d;
-					player.pos.y.d -= player.rgt.y.d;
+					player.movement = player.movement | 0b00001000;
 					sprintf(ostr, "joy: slt.    ");
 				break;
 				default:
@@ -231,6 +187,50 @@ void handlejoystick() {
 			cputsxy(0, 24, ostr);
 		}
 	}
+}
+
+void handlemovement() {
+	player.loc.x.u = player.pos.x.u>>FPS;
+	player.loc.y.u = player.pos.y.u>>FPS;
+	if ((player.movement&0b00000001)!=0) {
+		player.pos.x.d += player.dir.x.d;
+		player.pos.y.d += player.dir.y.d;
+	}
+	if ((player.movement&0b00000010)!=0) {
+		player.pos.x.d -= player.dir.x.d;
+		player.pos.y.d -= player.dir.y.d;
+	}
+	if ((player.movement&0b00000100)!=0) {
+		player.pos.x.d += player.rgt.x.d;
+		player.pos.y.d += player.rgt.y.d;
+	}
+	if ((player.movement&0b00001000)!=0) {
+		player.pos.x.d -= player.rgt.x.d;
+		player.pos.y.d -= player.rgt.y.d;
+	}
+	if ((player.movement&0b00010000)!=0) {
+		player.angfwd += 1;
+		player.angrgt += 1;
+	}
+	if ((player.movement&0b00100000)!=0) {
+		player.angfwd -= 1;
+		player.angrgt -= 1;
+	}
+	player.movement = 0;
+	if (player.angfwd<0) {
+		player.angfwd = 31;
+	} else if (player.angfwd>31) {
+		player.angfwd = 0;
+	}
+	if (player.angrgt<0) {
+		player.angrgt = 31;
+	} else if (player.angrgt>31) {
+		player.angrgt = 0;
+	}
+	player.indfwd = (player.angfwd<<5) + (player.angfwd<<3);
+	player.dir = RAYTABLE[player.indfwd+20];
+	player.indrgt = (player.angrgt<<5) + (player.angrgt<<3);
+	player.rgt = RAYTABLE[player.indrgt+20];
 }
 
 void drawvline(bool hit) {
@@ -375,11 +375,10 @@ void main(void) {
 	clrscr();
 	while (!e) {
 		time1 = gettime();
-		player.loc.x.u = player.pos.x.u>>FPS;
-		player.loc.y.u = player.pos.y.u>>FPS;
 		handlekeyboard();
 		handlemouse();
 		handlejoystick();
+		handlemovement();
 		shufflestep+=5;
 		if (shufflestep>=8) {
 			shufflestep-=8;
