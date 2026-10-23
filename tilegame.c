@@ -12,8 +12,13 @@
 #undef DYN_DRV
 #define DYN_DRV 0
 
+typedef union unionchar {
+	char c;
+	signed char d;
+	unsigned char u;
+} udchar;
 typedef struct vector {
-	signed char x, y, a, l;
+	udchar x, y, a, l;
 } vec;
 typedef struct pointray {
 	vec pos, dir;
@@ -103,24 +108,24 @@ void handlekeyboard() {
 			break;
 			case 87:
 			case 145:
-				player.pos.x += player.dir.x;
-				player.pos.y += player.dir.y;
+				player.pos.x.d += player.dir.x.d;
+				player.pos.y.d += player.dir.y.d;
 				sprintf(ostr, "key: fwd.    ");
 			break;
 			case 83:
 			case 17:
-				player.pos.x -= player.dir.x;
-				player.pos.y -= player.dir.y;
+				player.pos.x.d -= player.dir.x.d;
+				player.pos.y.d -= player.dir.y.d;
 				sprintf(ostr, "key: bck.    ");
 			break;
 			case 68:
-				player.pos.x += player.rgt.x;
-				player.pos.y += player.rgt.y;
+				player.pos.x.d += player.rgt.x.d;
+				player.pos.y.d += player.rgt.y.d;
 				sprintf(ostr, "key: srt.    ");
 			break;
 			case 65:
-				player.pos.x -= player.rgt.x;
-				player.pos.y -= player.rgt.y;
+				player.pos.x.d -= player.rgt.x.d;
+				player.pos.y.d -= player.rgt.y.d;
 				sprintf(ostr, "key: slt.    ");
 			break;
 			case 29:
@@ -172,13 +177,13 @@ void handlejoystick() {
 		if (u!=0) {
 			switch(u) {
 				case JOY_UP_MASK:
-					player.pos.x += player.dir.x;
-					player.pos.y += player.dir.y;
+					player.pos.x.d += player.dir.x.d;
+					player.pos.y.d += player.dir.y.d;
 					sprintf(ostr, "joy: fwd.    ");
 				break;
 				case JOY_DOWN_MASK:
-					player.pos.x -= player.dir.x;
-					player.pos.y -= player.dir.y;
+					player.pos.x.d -= player.dir.x.d;
+					player.pos.y.d -= player.dir.y.d;
 					sprintf(ostr, "joy: bck.    ");
 				break;
 				case JOY_RIGHT_MASK:
@@ -188,8 +193,8 @@ void handlejoystick() {
 					sprintf(ostr, "joy: rgt.    ");
 				break;
 				case JOY_UP_MASK|JOY_RIGHT_MASK:
-					player.pos.x += player.dir.x;
-					player.pos.y += player.dir.y;
+					player.pos.x.d += player.dir.x.d;
+					player.pos.y.d += player.dir.y.d;
 					player.angfwd += 1;
 					player.angrgt += 1;
 					changeplayerdir();
@@ -202,21 +207,21 @@ void handlejoystick() {
 					sprintf(ostr, "joy: lft.    ");
 				break;
 				case JOY_UP_MASK|JOY_LEFT_MASK:
-					player.pos.x += player.dir.x;
-					player.pos.y += player.dir.y;
+					player.pos.x.d += player.dir.x.d;
+					player.pos.y.d += player.dir.y.d;
 					player.angfwd -= 1;
 					player.angrgt -= 1;
 					changeplayerdir();
 					sprintf(ostr, "joy: fwl.    ");
 				break;
 				case JOY_RIGHT_MASK|JOY_DOWN_MASK:
-					player.pos.x += player.rgt.x;
-					player.pos.y += player.rgt.y;
+					player.pos.x.d += player.rgt.x.d;
+					player.pos.y.d += player.rgt.y.d;
 					sprintf(ostr, "joy: srt.    ");
 				break;
 				case JOY_LEFT_MASK|JOY_DOWN_MASK:
-					player.pos.x -= player.rgt.x;
-					player.pos.y -= player.rgt.y;
+					player.pos.x.d -= player.rgt.x.d;
+					player.pos.y.d -= player.rgt.y.d;
 					sprintf(ostr, "joy: slt.    ");
 				break;
 				default:
@@ -229,7 +234,7 @@ void handlejoystick() {
 }
 
 void drawvline(bool hit) {
-	p = screenray.pos.l>>4;
+	p = screenray.pos.l.u>>4;
 	if (p>12) {
 		p = 12;
 	}
@@ -241,25 +246,28 @@ void drawvline(bool hit) {
 	c3 = COLOR_LIGHTGREEN;
 	if (hit) {
 		v2 = 93;
-		switch(p) {
-			case 12: case 11: case 10: case 9: case 8:
-				c2 = COLOR_BLACK;
-			break;
-			case 7: case 6:
-				c2 = COLOR_GRAY1;
-			break;
-			case 5: case 4:
-				c2 = COLOR_GRAY2;
-			break;
-			case 3: case 2:
-				c2 = COLOR_GRAY3;
-			break;
-			case 1: case 0:
-				c2 = COLOR_WHITE;
-			break;
-			default:
-				c2 = COLOR_CYAN;
-			break;
+		c2 = m;
+		if (m==1) {
+			switch(p) {
+				case 12: case 11: case 10: case 9: case 8:
+					c2 = COLOR_BLACK;
+				break;
+				case 7: case 6:
+					c2 = COLOR_GRAY1;
+				break;
+				case 5: case 4:
+					c2 = COLOR_GRAY2;
+				break;
+				case 3: case 2:
+					c2 = COLOR_GRAY3;
+				break;
+				case 1: case 0:
+					c2 = COLOR_WHITE;
+				break;
+				default:
+					c2 = COLOR_CYAN;
+				break;
+			}
 		}
 	}
 	q = l;
@@ -331,7 +339,7 @@ void main(void) {
 	printf("lf1: %u - %u: %u, %u, %u, %u\n",l,k,TILEDSDF[0],TILEDSDF[1],TILEDSDF[2],TILEDSDF[3]);
 	k = loadfile("tiledata2", (unsigned)RAYTABLE);
 	l = cbm_k_readst();
-	printf("lf2: %u - %u: %d, %d, %d, %d\n",l,k,RAYTABLE[0].x,RAYTABLE[0].y,RAYTABLE[1].x,RAYTABLE[1].y);
+	printf("lf2: %u - %u: %d, %d, %d, %d\n",l,k,RAYTABLE[0].x.d,RAYTABLE[0].y.d,RAYTABLE[1].x.d,RAYTABLE[1].y.d);
 	k = loadfile("tileimage", (unsigned)IMAGE_RAM);
 	l = cbm_k_readst();
 	printf("lf3: %u - %u: %d, %d, %d, %d\n",l,k,IMAGE_RAM[0],IMAGE_RAM[1],IMAGE_RAM[2],IMAGE_RAM[3]);
@@ -366,8 +374,8 @@ void main(void) {
 	clrscr();
 	while (!e) {
 		time1 = gettime();
-		player.loc.x = player.pos.x>>FPS; if (player.pos.x<0) {player.loc.x = player.loc.x | FPSmask;} player.loc.x += 16;
-		player.loc.y = player.pos.y>>FPS; if (player.pos.y<0) {player.loc.y = player.loc.y | FPSmask;} player.loc.y += 16;
+		player.loc.x.u = player.pos.x.u>>FPS;
+		player.loc.y.u = player.pos.y.u>>FPS;
 		handlekeyboard();
 		handlemouse();
 		handlejoystick();
@@ -381,15 +389,15 @@ void main(void) {
 			screenray.dir = RAYTABLE[k-l];
 			f = false;
 			do {
-				x = screenray.pos.x>>FPS; if (screenray.pos.x<0) {x = x | FPSmask;}
-				y = screenray.pos.y>>FPS; if (screenray.pos.y<0) {y = y | FPSmask;}
-				i = ((y+16)<<5)+(x+16);
+				u = screenray.pos.x.u>>FPS;
+				v = screenray.pos.y.u>>FPS;
+				i = (v<<5)+u;
 				m = TILEDROOM[i];
 				if (m==0) {
 					n = TILEDSDF[i];
-					screenray.pos.x += screenray.dir.x<<n;
-					screenray.pos.y += screenray.dir.y<<n;
-					screenray.pos.l += screenray.dir.l<<n;
+					screenray.pos.x.d += screenray.dir.x.d<<n;
+					screenray.pos.y.d += screenray.dir.y.d<<n;
+					screenray.pos.l.u += screenray.dir.l.u<<n;
 				} else {
 					f = true;
 					drawvline(true);
@@ -400,7 +408,7 @@ void main(void) {
 		timedif = time2 - time1;
 		sprintf(ostr, "jcd: %u     ",timedif);
 		cputsxy(30, 24, ostr);
-		sprintf(ostr, "x,y: %d,%d  ",player.loc.x,player.loc.y);
+		sprintf(ostr, "x,y: %u,%u  ",player.loc.x.u,player.loc.y.u);
 		cputsxy(15, 24, ostr);
 		memcpy(TEXT_RAM+960, DEFAULT_TEXT_RAM+960, 40);
 	}
