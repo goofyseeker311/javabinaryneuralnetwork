@@ -32,7 +32,6 @@ typedef struct entity {
 
 const unsigned char tgipalette[2] = {TGI_COLOR_BLACK, TGI_COLOR_LIGHTBLUE};
 
-#define DYN_DRV 0
 #define CHARACTERSIZE 0x800
 #define SCREENWIDTH 40
 #define SCREENHEIGHT 25
@@ -51,6 +50,7 @@ const unsigned char tgipalette[2] = {TGI_COLOR_BLACK, TGI_COLOR_LIGHTBLUE};
 #define CHARACTER_RAM ((unsigned char*)0x8000)
 #define TEXT_RAM ((unsigned char*)0x8800)
 #define SCREEN_RAM ((unsigned char*)0x8C00)
+#define COLUMN_ZBUFFER ((unsigned char*)0x9000)
 #define IMAGE_RAM ((unsigned char*)0x9C00)
 #define BITMAP_RAM ((unsigned char*)0xA000)
 #define CHARACTER_ROM ((unsigned char*)0xD000)
@@ -69,7 +69,7 @@ char *ostr = "key:          ";
 struct mouse_info mouseinfo, mouseold;
 unsigned char joycount;
 
-ent player = {2<<FPS,3<<FPS,0,0,1<<FPS,0<<FPS,0,0,0<<FPS,1<<FPS,0,0,2,3,0,0,24,0,0,0};
+ent player = {2<<FPS,3<<FPS,0,0,1<<FPS,0<<FPS,0,0,0<<FPS,1<<FPS,0,0,2,3,0,0,24,0,0,0,0};
 ray screenray = {0};
 
 long gettime() {
@@ -400,6 +400,7 @@ void main(void) {
 					screenray.pos.l.u += screenray.dir.l.u<<n;
 				} else {
 					f = true;
+					COLUMN_ZBUFFER[l] = screenray.pos.l.u;
 					drawvline(true);
 				}
 			} while(!f);
@@ -464,5 +465,10 @@ void main(void) {
 	bgcolor(COLOR_BLUE);
 	bordercolor(COLOR_LIGHTBLUE);
 	textcolor(COLOR_LIGHTBLUE);
+	printf("CZ:");
+	for (l=0;l<SCREENWIDTH;l++) {
+		printf("%u,",COLUMN_ZBUFFER[l]);
+	}
+	printf("\n");
 	printf("exit.\n");
 }
