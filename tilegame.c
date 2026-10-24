@@ -244,7 +244,7 @@ void handlemovement() {
 }
 
 void drawvline(bool hit) {
-	p = screenray.pos.l.u>>4;
+	p = screenray.pos.l.u>>5;
 	if (p>12) {
 		p = 12;
 	}
