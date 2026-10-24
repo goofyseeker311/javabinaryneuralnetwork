@@ -44,9 +44,10 @@ const unsigned char tgipalette[2] = {TGI_COLOR_BLACK, TGI_COLOR_LIGHTBLUE};
 #define CHARACTER_ROM_CONFIG ((unsigned char*)0x0001)
 #define JIFFY_CLOCK ((unsigned char*)0x00A0)
 #define DEFAULT_TEXT_RAM ((unsigned char*)0x0400)
-#define TILEDROOM ((unsigned char*)0x4000)
-#define TILEDSDF ((unsigned char*)0x5000)
+#define TILEDROOM ((unsigned char*)0x5000)
+#define TILEDSDF ((unsigned char*)0x5800)
 #define RAYTABLE ((vec*)0x6000)
+#define RAYTABLE2 ((vec*)0x7800)
 #define CHARACTER_RAM ((unsigned char*)0x8000)
 #define TEXT_RAM ((unsigned char*)0x8800)
 #define SPRITE_RAM ((unsigned char*)0x8BF8)
@@ -193,21 +194,22 @@ void handlejoystick() {
 void handlemovement() {
 	player.loc.x.u = player.pos.x.u>>FPS;
 	player.loc.y.u = player.pos.y.u>>FPS;
+	screenray.pos = player.pos;
 	if ((player.movement&0b00000001)!=0) {
-		player.pos.x.d += player.dir.x.d;
-		player.pos.y.d += player.dir.y.d;
+		screenray.pos.x.d = player.pos.x.d + player.dir.x.d;
+		screenray.pos.y.d = player.pos.y.d + player.dir.y.d;
 	}
 	if ((player.movement&0b00000010)!=0) {
-		player.pos.x.d -= player.dir.x.d;
-		player.pos.y.d -= player.dir.y.d;
+		screenray.pos.x.d = player.pos.x.d - player.dir.x.d;
+		screenray.pos.y.d = player.pos.y.d - player.dir.y.d;
 	}
 	if ((player.movement&0b00000100)!=0) {
-		player.pos.x.d += player.rgt.x.d;
-		player.pos.y.d += player.rgt.y.d;
+		screenray.pos.x.d = player.pos.x.d + player.rgt.x.d;
+		screenray.pos.y.d = player.pos.y.d + player.rgt.y.d;
 	}
 	if ((player.movement&0b00001000)!=0) {
-		player.pos.x.d -= player.rgt.x.d;
-		player.pos.y.d -= player.rgt.y.d;
+		screenray.pos.x.d = player.pos.x.d - player.rgt.x.d;
+		screenray.pos.y.d = player.pos.y.d - player.rgt.y.d;
 	}
 	if ((player.movement&0b00010000)!=0) {
 		player.angfwd += 1;
@@ -216,6 +218,13 @@ void handlemovement() {
 	if ((player.movement&0b00100000)!=0) {
 		player.angfwd -= 1;
 		player.angrgt -= 1;
+	}
+	u = screenray.pos.x.u>>FPS;
+	v = screenray.pos.y.u>>FPS;
+	i = (v<<5)+u;
+	m = TILEDROOM[i];
+	if (m==0) {
+		player.pos = screenray.pos;
 	}
 	player.movement = 0;
 	if (player.angfwd<0) {
@@ -335,16 +344,19 @@ void main(void) {
 	bzero(BITMAP_RAM, SCREENSIZE*8);
 	k = loadfile("tiledroom", (unsigned)TILEDROOM);
 	l = cbm_k_readst();
-	printf("lf0: %u - %u: %u, %u, %u, %u\n",l,k,TILEDROOM[0],TILEDROOM[1],TILEDROOM[2],TILEDROOM[3]);
+	printf("room: %x - %x: %u, %u, %u, %u\n",l,k,TILEDROOM[0],TILEDROOM[1],TILEDROOM[2],TILEDROOM[3]);
 	k = loadfile("tiledsdf", (unsigned)TILEDSDF);
 	l = cbm_k_readst();
-	printf("lf1: %u - %u: %u, %u, %u, %u\n",l,k,TILEDSDF[0],TILEDSDF[1],TILEDSDF[2],TILEDSDF[3]);
-	k = loadfile("tiledata2", (unsigned)RAYTABLE);
+	printf("sdf: %x - %x: %u, %u, %u, %u\n",l,k,TILEDSDF[0],TILEDSDF[1],TILEDSDF[2],TILEDSDF[3]);
+	k = loadfile("tiledata", (unsigned)RAYTABLE);
 	l = cbm_k_readst();
-	printf("lf2: %u - %u: %d, %d, %d, %d\n",l,k,RAYTABLE[0].x.d,RAYTABLE[0].y.d,RAYTABLE[1].x.d,RAYTABLE[1].y.d);
+	printf("ray: %x - %x: %d, %d, %d, %d\n",l,k,RAYTABLE[0].x.d,RAYTABLE[0].y.d,RAYTABLE[1].x.d,RAYTABLE[1].y.d);
+	k = loadfile("tiledata2", (unsigned)RAYTABLE2);
+	l = cbm_k_readst();
+	printf("ray2: %x - %x: %d, %d, %d, %d\n",l,k,RAYTABLE2[0].x.d,RAYTABLE2[0].y.d,RAYTABLE2[1].x.d,RAYTABLE2[1].y.d);
 	k = loadfile("tileimage", (unsigned)IMAGE_RAM);
 	l = cbm_k_readst();
-	printf("lf3: %u - %u: %d, %d, %d, %d\n",l,k,IMAGE_RAM[0],IMAGE_RAM[1],IMAGE_RAM[2],IMAGE_RAM[3]);
+	printf("image: %x - %x: %d, %d, %d, %d\n",l,k,IMAGE_RAM[0],IMAGE_RAM[1],IMAGE_RAM[2],IMAGE_RAM[3]);
 	cputcxy(0,0,'a');
 	cgetc();
 
@@ -394,7 +406,7 @@ void main(void) {
 	VIC.spr_exp_x = 0x00;
 	VIC.spr_exp_y = 0xff;
 	VIC.spr_bg_prio = 0b10101110;
-	VIC.spr_ena = 0xff;
+	VIC.spr_ena = 0b00000000;
 	while (!e) {
 		time1 = gettime();
 		handlekeyboard();

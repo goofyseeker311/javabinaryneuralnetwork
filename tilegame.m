@@ -27,9 +27,9 @@ figure(2); scatter(a(1,:),a(2,:));
 figure(3); plot(da,'o-'); xlim([1 176]); ylim([-25 25]);
 figure(4); plot(db,'o-'); xlim([1 176]); ylim([5 11]);
 
-fn = "tiledata.prg";
+fn = "tiledata2.prg";
 fopen(fn,'w');
-fwrite(fn,cast(0x6000,'uint16'),'uint16',0,'l');
+fwrite(fn,cast(0x7800,'uint16'),'uint16',0,'l');
 fwrite(fn,cast(f','int8'),'int8',0,'l');
 fclose(fn);
 
@@ -66,7 +66,7 @@ for n = 1:drs
 endfor
 c2 = round(b2a*2^3);
 
-fn = "tiledata2.prg";
+fn = "tiledata.prg";
 fopen(fn,'w');
 fwrite(fn,cast(0x6000,'uint16'),'uint16',0,'l');
 fwrite(fn,cast(c2','int8'),'int8',0,'l');
@@ -113,7 +113,7 @@ tiledroom(tiledroom<0) = 0;
 
 fn = "tiledroom.prg";
 fopen(fn,'w');
-fwrite(fn,cast(0x4000,'uint16'),'uint16',0,'l');
+fwrite(fn,cast(0x5000,'uint16'),'uint16',0,'l');
 fwrite(fn,cast(tiledroom','uint8'),'uint8',0,'l');
 fclose(fn);
 
@@ -138,7 +138,7 @@ tiledsdf(tiledsdf>5) = 5;
 
 fn = "tiledsdf.prg";
 fopen(fn,'w');
-fwrite(fn,cast(0x5000,'uint16'),'uint16',0,'l');
+fwrite(fn,cast(0x5800,'uint16'),'uint16',0,'l');
 fwrite(fn,cast(tiledsdf','uint8'),'uint8',0,'l');
 fclose(fn);
 
