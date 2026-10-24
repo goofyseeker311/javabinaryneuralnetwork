@@ -192,8 +192,6 @@ void handlejoystick() {
 }
 
 void handlemovement() {
-	player.loc.x.u = player.pos.x.u>>FPS;
-	player.loc.y.u = player.pos.y.u>>FPS;
 	screenray.pos = player.pos;
 	if ((player.movement&0b00000001)!=0) {
 		screenray.pos.x.d = player.pos.x.d + player.dir.x.d;
@@ -227,6 +225,8 @@ void handlemovement() {
 		player.pos = screenray.pos;
 	}
 	player.movement = 0;
+	player.loc.x.u = player.pos.x.u>>FPS;
+	player.loc.y.u = player.pos.y.u>>FPS;
 	if (player.angfwd<0) {
 		player.angfwd = 31;
 	} else if (player.angfwd>31) {
