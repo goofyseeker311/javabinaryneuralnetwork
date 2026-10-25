@@ -13,18 +13,26 @@
 #define DYN_DRV 0
 
 typedef union unionchar {
-	char c;
 	signed char d;
 	unsigned char u;
 } udchar;
-typedef struct vector {
+typedef struct charvector {
 	udchar x, y, a, l;
-} vec;
+} charvec;
+typedef union unionint {
+	int d;
+	unsigned int u;
+} udint;
+typedef struct intvector {
+	udint x, y, a, l;
+} intvec;
 typedef struct pointray {
-	vec pos, dir;
+	intvec pos;
+	charvec dir;
 } ray;
 typedef struct entity {
-	vec pos, dir, rgt, loc;
+	intvec pos;
+	charvec dir, rgt, loc;
 	int angfwd, angrgt;
 	int indfwd, indrgt;
 	unsigned char movement;
@@ -40,19 +48,19 @@ const unsigned char tgipalette[2] = {TGI_COLOR_BLACK, TGI_COLOR_LIGHTBLUE};
 #define TILEDSIZE 1024
 #define RAYCOUNT 1280
 #define RAYSIZE 2560
-#define FPS 3
+#define FPS 8
 #define CHARACTER_ROM_CONFIG ((unsigned char*)0x0001)
 #define JIFFY_CLOCK ((unsigned char*)0x00A0)
 #define DEFAULT_TEXT_RAM ((unsigned char*)0x0400)
 #define TILEDROOM ((unsigned char*)0x5000)
 #define TILEDSDF ((unsigned char*)0x5800)
-#define RAYTABLE ((vec*)0x6000)
-#define RAYTABLE2 ((vec*)0x7800)
+#define RAYTABLE ((charvec*)0x6000)
+#define RAYTABLE2 ((charvec*)0x7800)
 #define CHARACTER_RAM ((unsigned char*)0x8000)
 #define TEXT_RAM ((unsigned char*)0x8800)
 #define SPRITE_RAM ((unsigned char*)0x8BF8)
 #define SCREEN_RAM ((unsigned char*)0x8C00)
-#define COLUMN_ZBUFFER ((unsigned char*)0x9000)
+#define COLUMN_ZBUFFER ((unsigned int*)0x9000)
 #define IMAGE_RAM ((unsigned char*)0x9C00)
 #define BITMAP_RAM ((unsigned char*)0xA000)
 #define CHARACTER_ROM ((unsigned char*)0xD000)
@@ -66,7 +74,6 @@ unsigned char l=0, m=0, n=0, o=0, p=0, u=0, v=0;
 unsigned char c1=0, c2=0, c3=0, v1=0, v2=0, v3=0;
 long time1=0, time2=0, timedif=0;
 unsigned char shufflestep = 0;
-unsigned char FPSmask = 0b1111111<<(8-FPS);
 char *ostr = "key:          ";
 struct mouse_info mouseinfo, mouseold;
 unsigned char joycount;
@@ -194,20 +201,20 @@ void handlejoystick() {
 void handlemovement() {
 	screenray.pos = player.pos;
 	if ((player.movement&0b00000001)!=0) {
-		screenray.pos.x.d = player.pos.x.d + player.dir.x.d;
-		screenray.pos.y.d = player.pos.y.d + player.dir.y.d;
+		screenray.pos.x.d = player.pos.x.d + (player.dir.x.d<<4);
+		screenray.pos.y.d = player.pos.y.d + (player.dir.y.d<<4);
 	}
 	if ((player.movement&0b00000010)!=0) {
-		screenray.pos.x.d = player.pos.x.d - player.dir.x.d;
-		screenray.pos.y.d = player.pos.y.d - player.dir.y.d;
+		screenray.pos.x.d = player.pos.x.d - (player.dir.x.d<<4);
+		screenray.pos.y.d = player.pos.y.d - (player.dir.y.d<<4);
 	}
 	if ((player.movement&0b00000100)!=0) {
-		screenray.pos.x.d = player.pos.x.d + player.rgt.x.d;
-		screenray.pos.y.d = player.pos.y.d + player.rgt.y.d;
+		screenray.pos.x.d = player.pos.x.d + (player.rgt.x.d<<4);
+		screenray.pos.y.d = player.pos.y.d + (player.rgt.y.d<<4);
 	}
 	if ((player.movement&0b00001000)!=0) {
-		screenray.pos.x.d = player.pos.x.d - player.rgt.x.d;
-		screenray.pos.y.d = player.pos.y.d - player.rgt.y.d;
+		screenray.pos.x.d = player.pos.x.d - (player.rgt.x.d<<4);
+		screenray.pos.y.d = player.pos.y.d - (player.rgt.y.d<<4);
 	}
 	if ((player.movement&0b00010000)!=0) {
 		player.angfwd += 1;
@@ -244,7 +251,7 @@ void handlemovement() {
 }
 
 void drawvline(bool hit) {
-	p = screenray.pos.l.u>>5;
+	p = (screenray.pos.l.u>>FPS)>>2;
 	if (p>12) {
 		p = 12;
 	}
@@ -421,6 +428,9 @@ void main(void) {
 		for (l=shufflestep;l<SCREENWIDTH;l+=8) {
 			screenray.pos = player.pos;
 			screenray.dir = RAYTABLE[k-l];
+			screenray.dir.x.d <<= 4;
+			screenray.dir.y.d <<= 4;
+			screenray.dir.l.u <<= 4;
 			f = false;
 			do {
 				u = screenray.pos.x.u>>FPS;
@@ -428,10 +438,9 @@ void main(void) {
 				i = (v<<5)+u;
 				m = TILEDROOM[i];
 				if (m==0) {
-					n = TILEDSDF[i];
-					screenray.pos.x.d += screenray.dir.x.d<<n;
-					screenray.pos.y.d += screenray.dir.y.d<<n;
-					screenray.pos.l.u += screenray.dir.l.u<<n;
+					screenray.pos.x.d += screenray.dir.x.d;
+					screenray.pos.y.d += screenray.dir.y.d;
+					screenray.pos.l.u += screenray.dir.l.u;
 				} else {
 					f = true;
 					COLUMN_ZBUFFER[l] = screenray.pos.l.u;
