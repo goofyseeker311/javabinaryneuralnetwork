@@ -19,20 +19,11 @@ typedef union unionchar {
 typedef struct charvector {
 	udchar x, y, a, l;
 } charvec;
-typedef union unionint {
-	int d;
-	unsigned int u;
-} udint;
-typedef struct intvector {
-	udint x, y, a, l;
-} intvec;
 typedef struct pointray {
-	intvec pos;
-	charvec dir;
+	charvec pos, dir;
 } ray;
 typedef struct entity {
-	intvec pos;
-	charvec dir, rgt, loc;
+	charvec pos, dir, rgt, loc;
 	int angfwd, angrgt;
 	int indfwd, indrgt;
 	unsigned char movement;
@@ -48,7 +39,7 @@ const unsigned char tgipalette[2] = {TGI_COLOR_BLACK, TGI_COLOR_LIGHTBLUE};
 #define TILEDSIZE 1024
 #define RAYCOUNT 1280
 #define RAYSIZE 2560
-#define FPS 8
+#define FPS 3
 #define CHARACTER_ROM_CONFIG ((unsigned char*)0x0001)
 #define JIFFY_CLOCK ((unsigned char*)0x00A0)
 #define DEFAULT_TEXT_RAM ((unsigned char*)0x0400)
@@ -60,7 +51,7 @@ const unsigned char tgipalette[2] = {TGI_COLOR_BLACK, TGI_COLOR_LIGHTBLUE};
 #define TEXT_RAM ((unsigned char*)0x8800)
 #define SPRITE_RAM ((unsigned char*)0x8BF8)
 #define SCREEN_RAM ((unsigned char*)0x8C00)
-#define COLUMN_ZBUFFER ((unsigned int*)0x9000)
+#define COLUMN_ZBUFFER ((charvec*)0x9000)
 #define IMAGE_RAM ((unsigned char*)0x9C00)
 #define BITMAP_RAM ((unsigned char*)0xA000)
 #define CHARACTER_ROM ((unsigned char*)0xD000)
@@ -201,20 +192,20 @@ void handlejoystick() {
 void handlemovement() {
 	screenray.pos = player.pos;
 	if ((player.movement&0b00000001)!=0) {
-		screenray.pos.x.d = player.pos.x.d + (player.dir.x.d<<4);
-		screenray.pos.y.d = player.pos.y.d + (player.dir.y.d<<4);
+		screenray.pos.x.d = player.pos.x.d + player.dir.x.d;
+		screenray.pos.y.d = player.pos.y.d + player.dir.y.d;
 	}
 	if ((player.movement&0b00000010)!=0) {
-		screenray.pos.x.d = player.pos.x.d - (player.dir.x.d<<4);
-		screenray.pos.y.d = player.pos.y.d - (player.dir.y.d<<4);
+		screenray.pos.x.d = player.pos.x.d - player.dir.x.d;
+		screenray.pos.y.d = player.pos.y.d - player.dir.y.d;
 	}
 	if ((player.movement&0b00000100)!=0) {
-		screenray.pos.x.d = player.pos.x.d + (player.rgt.x.d<<4);
-		screenray.pos.y.d = player.pos.y.d + (player.rgt.y.d<<4);
+		screenray.pos.x.d = player.pos.x.d + player.rgt.x.d;
+		screenray.pos.y.d = player.pos.y.d + player.rgt.y.d;
 	}
 	if ((player.movement&0b00001000)!=0) {
-		screenray.pos.x.d = player.pos.x.d - (player.rgt.x.d<<4);
-		screenray.pos.y.d = player.pos.y.d - (player.rgt.y.d<<4);
+		screenray.pos.x.d = player.pos.x.d - player.rgt.x.d;
+		screenray.pos.y.d = player.pos.y.d - player.rgt.y.d;
 	}
 	if ((player.movement&0b00010000)!=0) {
 		player.angfwd += 1;
@@ -428,9 +419,6 @@ void main(void) {
 		for (l=shufflestep;l<SCREENWIDTH;l+=8) {
 			screenray.pos = player.pos;
 			screenray.dir = RAYTABLE[k-l];
-			screenray.dir.x.d <<= 4;
-			screenray.dir.y.d <<= 4;
-			screenray.dir.l.u <<= 4;
 			f = false;
 			do {
 				u = screenray.pos.x.u>>FPS;
@@ -443,7 +431,19 @@ void main(void) {
 					screenray.pos.l.u += screenray.dir.l.u;
 				} else {
 					f = true;
-					COLUMN_ZBUFFER[l] = screenray.pos.l.u;
+					COLUMN_ZBUFFER[l].l.u = screenray.pos.l.u;
+					x = (screenray.pos.x.d<<4)>>4;
+					y = (screenray.pos.y.d<<4)>>4;
+					z = x;
+					w = y;
+					while(((z&0b10000000)==(x&0b10000000))&&((w&0b10000000)==(y&0b10000000))) {
+						z = x;
+						w = y;
+						x -= screenray.dir.x.d;
+						y -= screenray.dir.y.d;
+					}
+					COLUMN_ZBUFFER[l].x.d = z;
+					COLUMN_ZBUFFER[l].y.d = w;
 					drawvline(true);
 				}
 			} while(!f);
@@ -511,7 +511,7 @@ void main(void) {
 	textcolor(COLOR_LIGHTBLUE);
 	printf("CZ:");
 	for (l=0;l<SCREENWIDTH;l++) {
-		printf("%u,",COLUMN_ZBUFFER[l]);
+		printf("%u:%d:%d, ",COLUMN_ZBUFFER[l].l.u,COLUMN_ZBUFFER[l].x.d,COLUMN_ZBUFFER[l].y.d);
 	}
 	printf("\n");
 	printf("exit.\n");
