@@ -432,8 +432,8 @@ void main(void) {
 				} else {
 					f = true;
 					COLUMN_ZBUFFER[l].l.u = screenray.pos.l.u;
-					x = (screenray.pos.x.d<<4)>>4;
-					y = (screenray.pos.y.d<<4)>>4;
+					x = (screenray.pos.x.d<<4)&0b01110000;
+					y = (screenray.pos.y.d<<4)&0b01110000;
 					z = x;
 					w = y;
 					while(((z&0b10000000)==(x&0b10000000))&&((w&0b10000000)==(y&0b10000000))) {
