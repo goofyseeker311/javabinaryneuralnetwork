@@ -453,16 +453,16 @@ void main(void) {
 						y = 127 - w;
 					}
 					if (x<y) {
-						if (x<w) {
+						if (x<z) {
 							COLUMN_ZBUFFER[l].a.d = 13;
 						} else {
 							COLUMN_ZBUFFER[l].a.d = -13;
 						}
 					} else {
-						if (y<z) {
-							COLUMN_ZBUFFER[l].a.d = 0;
-						} else {
+						if (y<w) {
 							COLUMN_ZBUFFER[l].a.d = -25;
+						} else {
+							COLUMN_ZBUFFER[l].a.d = 0;
 						}
 					}
 					drawvline(true);
@@ -532,7 +532,7 @@ void main(void) {
 	textcolor(COLOR_LIGHTBLUE);
 	printf("CZ:");
 	for (l=0;l<SCREENWIDTH;l++) {
-		printf("%u:%d-%d:%d, ",COLUMN_ZBUFFER[l].l.u,COLUMN_ZBUFFER[l].a.d,COLUMN_ZBUFFER[l].x.d,COLUMN_ZBUFFER[l].y.d);
+		printf("%u:%d#%d:%d, ",COLUMN_ZBUFFER[l].l.u,COLUMN_ZBUFFER[l].a.d,COLUMN_ZBUFFER[l].x.d,COLUMN_ZBUFFER[l].y.d);
 	}
 	printf("\n");
 	printf("exit.\n");
