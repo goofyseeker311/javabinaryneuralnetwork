@@ -444,6 +444,27 @@ void main(void) {
 					}
 					COLUMN_ZBUFFER[l].x.d = z;
 					COLUMN_ZBUFFER[l].y.d = w;
+					x = z;
+					y = w;
+					if (z>63) {
+						x = 127 - z;
+					}
+					if (w>63) {
+						y = 127 - w;
+					}
+					if (x<y) {
+						if (x<w) {
+							COLUMN_ZBUFFER[l].a.d = 13;
+						} else {
+							COLUMN_ZBUFFER[l].a.d = -13;
+						}
+					} else {
+						if (y<z) {
+							COLUMN_ZBUFFER[l].a.d = 0;
+						} else {
+							COLUMN_ZBUFFER[l].a.d = -25;
+						}
+					}
 					drawvline(true);
 				}
 			} while(!f);
@@ -511,7 +532,7 @@ void main(void) {
 	textcolor(COLOR_LIGHTBLUE);
 	printf("CZ:");
 	for (l=0;l<SCREENWIDTH;l++) {
-		printf("%u:%d:%d, ",COLUMN_ZBUFFER[l].l.u,COLUMN_ZBUFFER[l].x.d,COLUMN_ZBUFFER[l].y.d);
+		printf("%u:%d-%d:%d, ",COLUMN_ZBUFFER[l].l.u,COLUMN_ZBUFFER[l].a.d,COLUMN_ZBUFFER[l].x.d,COLUMN_ZBUFFER[l].y.d);
 	}
 	printf("\n");
 	printf("exit.\n");
