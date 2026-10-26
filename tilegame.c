@@ -58,7 +58,7 @@ const unsigned char tgipalette[2] = {TGI_COLOR_BLACK, TGI_COLOR_LIGHTBLUE};
 
 bool e=false, f=false;
 int i=0, j=0, c=0, d=0;
-signed char x=0, y=0, z=0, w=0;
+signed char x=0, y=0, z=0, w=0, g=0, h=0;
 char a=0, b=0;
 unsigned int k=0, q=0, r=0, s=0, t=0;
 unsigned char l=0, m=0, n=0, o=0, p=0, u=0, v=0;
@@ -454,17 +454,19 @@ void main(void) {
 					}
 					if (x<y) {
 						if (x<z) {
-							COLUMN_ZBUFFER[l].a.d = 13;
+							g = -13;
 						} else {
-							COLUMN_ZBUFFER[l].a.d = -13;
+							g = 13;
 						}
 					} else {
 						if (y<w) {
-							COLUMN_ZBUFFER[l].a.d = -25;
+							g = 0;
 						} else {
-							COLUMN_ZBUFFER[l].a.d = 0;
+							g = -25;
 						}
 					}
+					h = screenray.dir.a.d - g;
+					COLUMN_ZBUFFER[l].a.d = h;
 					drawvline(true);
 				}
 			} while(!f);
