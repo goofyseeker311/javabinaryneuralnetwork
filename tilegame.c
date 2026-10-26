@@ -255,6 +255,11 @@ void drawvline(bool hit) {
 	if (hit) {
 		v2 = 93;
 		c2 = m;
+		if (h>12) {
+			v2 = 105;
+		} else if (h<-12) {
+			v2 = 95;
+		}
 		if (m==1) {
 			switch(p) {
 				case 12: case 11: case 10: case 9: case 8:
