@@ -184,6 +184,37 @@ void handlejoystick() {
 	}
 }
 
+void cameradirection(intvec* ivec, int ang, int ofs) {
+	switch(ang) {
+		case 0: case 1: case 2: case 3: case 4: case 5: case 6: case 7:
+			*ivec = RAYTABLE[k-l];
+			ivec->l = RAYTABLE[k-ofs].l;
+		break;
+		case 8: case 9: case 10: case 11: case 12: case 13: case 14: case 15:
+			ivec->x = -RAYTABLE[k-320-l].y;
+			ivec->y = RAYTABLE[k-320-l].x;
+			ivec->a = RAYTABLE[k-320-l].a - 402;
+			ivec->l = RAYTABLE[k-320-ofs].l;
+		break;
+		case 16: case 17: case 18: case 19: case 20: case 21: case 22: case 23:
+			ivec->x = -RAYTABLE[k-640-l].x;
+			ivec->y = -RAYTABLE[k-640-l].y;
+			ivec->a = RAYTABLE[k-640-l].a - 802;
+			if (ivec->a<-802) { ivec->a += 1604;}
+			ivec->l = RAYTABLE[k-640-ofs].l;
+		break;
+		case 24: case 25: case 26: case 27: case 28: case 29: case 30: case 31:
+			ivec->x = RAYTABLE[k-960-l].y;
+			ivec->y = -RAYTABLE[k-960-l].x;
+			ivec->a = RAYTABLE[k-960-l].a + 402;
+			ivec->l = RAYTABLE[k-960-ofs].l;
+		break;
+		default:
+			*ivec = RAYTABLE[0];
+		break;
+	}
+}
+
 void handlemovement() {
 	screenray.pos = player.pos;
 	if ((player.movement&0b00000001)!=0) {
@@ -233,63 +264,11 @@ void handlemovement() {
 	player.indfwd = (player.angfwd<<5) + (player.angfwd<<3);
 	player.indrgt = (player.angrgt<<5) + (player.angrgt<<3);
 
+	l = 0;
 	k = player.indfwd + 20;
-	switch(player.angfwd) {
-		case 0: case 1: case 2: case 3: case 4: case 5: case 6: case 7:
-			player.dir = RAYTABLE[k];
-		break;
-		case 8: case 9: case 10: case 11: case 12: case 13: case 14: case 15:
-			player.dir.x = -RAYTABLE[k-320].y;
-			player.dir.y = RAYTABLE[k-320].x;
-			player.dir.a = RAYTABLE[k-320].a - 402;
-			player.dir.l = RAYTABLE[k-320].l;
-		break;
-		case 16: case 17: case 18: case 19: case 20: case 21: case 22: case 23:
-			player.dir.x = -RAYTABLE[k-640].x;
-			player.dir.y = -RAYTABLE[k-640].y;
-			player.dir.a = RAYTABLE[k-640].a - 802;
-			if (player.dir.a<-802) { player.dir.a += 1604;}
-			player.dir.l = RAYTABLE[k-640].l;
-		break;
-		case 24: case 25: case 26: case 27: case 28: case 29: case 30: case 31:
-			player.dir.x = RAYTABLE[k-960].y;
-			player.dir.y = -RAYTABLE[k-960].x;
-			player.dir.a = RAYTABLE[k-960].a + 402;
-			player.dir.l = RAYTABLE[k-960].l;
-		break;
-		default:
-			player.dir = RAYTABLE[0];
-		break;
-	}
-
+	cameradirection(&player.dir, player.angfwd, 0);
 	k = player.indrgt + 20;
-	switch(player.angrgt) {
-		case 0: case 1: case 2: case 3: case 4: case 5: case 6: case 7:
-			player.rgt = RAYTABLE[k];
-		break;
-		case 8: case 9: case 10: case 11: case 12: case 13: case 14: case 15:
-			player.rgt.x = -RAYTABLE[k-320].y;
-			player.rgt.y = RAYTABLE[k-320].x;
-			player.rgt.a = RAYTABLE[k-320].a - 402;
-			player.rgt.l = RAYTABLE[k-320].l;
-		break;
-		case 16: case 17: case 18: case 19: case 20: case 21: case 22: case 23:
-			player.rgt.x = -RAYTABLE[k-640].x;
-			player.rgt.y = -RAYTABLE[k-640].y;
-			player.rgt.a = RAYTABLE[k-640].a - 802;
-			if (player.rgt.a<-802) { player.rgt.a += 1604;}
-			player.rgt.l = RAYTABLE[k-640].l;
-		break;
-		case 24: case 25: case 26: case 27: case 28: case 29: case 30: case 31:
-			player.rgt.x = RAYTABLE[k-960].y;
-			player.rgt.y = -RAYTABLE[k-960].x;
-			player.rgt.a = RAYTABLE[k-960].a + 402;
-			player.rgt.l = RAYTABLE[k-960].l;
-		break;
-		default:
-			player.rgt = RAYTABLE[0];
-		break;
-	}
+	cameradirection(&player.rgt, player.angrgt, 0);
 }
 
 void drawvline(bool hit) {
@@ -470,35 +449,7 @@ void main(void) {
 		k = player.indfwd + (SCREENWIDTH-1);
 		for (l=shufflestep;l<SCREENWIDTH;l+=8) {
 			screenray.pos = player.pos;
-			switch(player.angfwd) {
-				case 0: case 1: case 2: case 3: case 4: case 5: case 6: case 7:
-					screenray.dir = RAYTABLE[k-l];
-					screenray.dir.l = RAYTABLE[k-20].l;
-				break;
-				case 8: case 9: case 10: case 11: case 12: case 13: case 14: case 15:
-					screenray.dir.x = -RAYTABLE[k-320-l].y;
-					screenray.dir.y = RAYTABLE[k-320-l].x;
-					screenray.dir.a = RAYTABLE[k-320-l].a - 402;
-					screenray.dir.l = RAYTABLE[k-320-20].l;
-				break;
-				case 16: case 17: case 18: case 19: case 20: case 21: case 22: case 23:
-					screenray.dir.x = -RAYTABLE[k-640-l].x;
-					screenray.dir.y = -RAYTABLE[k-640-l].y;
-					screenray.dir.a = RAYTABLE[k-640-l].a - 802;
-					if (screenray.dir.a<-802) { screenray.dir.a += 802;}
-					screenray.dir.l = RAYTABLE[k-640-20].l;
-				break;
-				case 24: case 25: case 26: case 27: case 28: case 29: case 30: case 31:
-					screenray.dir.x = RAYTABLE[k-960-l].y;
-					screenray.dir.y = -RAYTABLE[k-960-l].x;
-					screenray.dir.a = RAYTABLE[k-960-l].a + 402;
-					screenray.dir.l = RAYTABLE[k-960-20].l;
-				break;
-				default:
-					screenray.dir = RAYTABLE[0];
-				break;
-			}
-
+			cameradirection(&screenray.dir, player.angfwd, 20);
 			f = false;
 			do {
 				u = screenray.pos.x>>FPS;
