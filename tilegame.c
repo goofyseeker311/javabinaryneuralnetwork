@@ -442,12 +442,12 @@ void main(void) {
 		handlemouse();
 		handlejoystick();
 		handlemovement();
-		shufflestep+=5;
-		if (shufflestep>=8) {
-			shufflestep-=8;
+		shufflestep+=9;
+		if (shufflestep>=16) {
+			shufflestep-=16;
 		}
 		k = player.indfwd + (SCREENWIDTH-1);
-		for (l=shufflestep;l<SCREENWIDTH;l+=8) {
+		for (l=shufflestep;l<SCREENWIDTH;l+=16) {
 			screenray.pos = player.pos;
 			cameradirection(&screenray.dir, player.angfwd, 20);
 			f = false;
