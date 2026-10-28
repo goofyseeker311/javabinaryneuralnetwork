@@ -12,18 +12,14 @@
 #undef DYN_DRV
 #define DYN_DRV 0
 
-typedef union unionchar {
-	signed char d;
-	unsigned char u;
-} udchar;
-typedef struct charvector {
-	udchar x, y, a, l;
-} charvec;
+typedef struct intvector {
+	int x, y, a, l;
+} intvec;
 typedef struct pointray {
-	charvec pos, dir;
+	intvec pos, dir;
 } ray;
 typedef struct entity {
-	charvec pos, dir, rgt, loc;
+	intvec pos, dir, rgt, loc;
 	int angfwd, angrgt;
 	int indfwd, indrgt;
 	unsigned char movement;
@@ -31,37 +27,36 @@ typedef struct entity {
 
 const unsigned char tgipalette[2] = {TGI_COLOR_BLACK, TGI_COLOR_LIGHTBLUE};
 
-#define CHARACTERSIZE 0x800
+#define CHARACTERSIZE 2048
 #define SCREENWIDTH 40
 #define SCREENHEIGHT 25
 #define SCREENSIZE 1000
-#define TILEDDIM 32
-#define TILEDSIZE 1024
+#define LEVELDIM 6
+#define TILEDDIM 64
+#define TILEDSIZE 4096
 #define RAYCOUNT 1280
 #define RAYSIZE 2560
-#define FPS 3
+#define FPS 8
 #define CHARACTER_ROM_CONFIG ((unsigned char*)0x0001)
 #define JIFFY_CLOCK ((unsigned char*)0x00A0)
 #define DEFAULT_TEXT_RAM ((unsigned char*)0x0400)
-#define TILEDROOM ((unsigned char*)0x5000)
-#define TILEDSDF ((unsigned char*)0x5800)
-#define RAYTABLE ((charvec*)0x6000)
-#define RAYTABLE2 ((charvec*)0x7800)
+#define TILEDROOM ((unsigned char*)0x6000)
+#define RAYTABLE ((intvec*)0x7000)
+#define RAYTABLE2 ((intvec*)0x7C00)
 #define CHARACTER_RAM ((unsigned char*)0x8000)
 #define TEXT_RAM ((unsigned char*)0x8800)
 #define SPRITE_RAM ((unsigned char*)0x8BF8)
 #define SCREEN_RAM ((unsigned char*)0x8C00)
-#define COLUMN_ZBUFFER ((charvec*)0x9000)
+#define COLUMN_ZBUFFER ((intvec*)0x9000)
 #define IMAGE_RAM ((unsigned char*)0x9C00)
 #define BITMAP_RAM ((unsigned char*)0xA000)
 #define CHARACTER_ROM ((unsigned char*)0xD000)
 
-bool e=false, f=false;
-int i=0, j=0, c=0, d=0;
-signed char x=0, y=0, z=0, w=0, g=0, h=0;
-char a=0, b=0;
+bool e=false, f=false, f2=false;
+int i=0, j=0, c=0, d=0, x=0, y=0, z=0, w=0, u=0, v=0, g=0, h=0;
 unsigned int k=0, q=0, r=0, s=0, t=0;
-unsigned char l=0, m=0, n=0, o=0, p=0, u=0, v=0;
+char a=0, b=0;
+unsigned char l=0, m=0, n=0, o=0, p=0;
 unsigned char c1=0, c2=0, c3=0, v1=0, v2=0, v3=0;
 long time1=0, time2=0, timedif=0;
 unsigned char shufflestep = 0;
@@ -69,7 +64,7 @@ char *ostr = "key:          ";
 struct mouse_info mouseinfo, mouseold;
 unsigned char joycount;
 
-ent player = {2<<FPS,3<<FPS,0,0,1<<FPS,0<<FPS,0,0,0<<FPS,1<<FPS,0,0,2,3,0,0,24,0,0,0,0};
+ent player = {2<<FPS,3<<FPS,0,0,1<<FPS,0<<FPS,0,0,0<<FPS,1<<FPS,0,0,2,3,0,0,6,0,0,0,0};
 ray screenray = {0};
 
 long gettime() {
@@ -192,20 +187,20 @@ void handlejoystick() {
 void handlemovement() {
 	screenray.pos = player.pos;
 	if ((player.movement&0b00000001)!=0) {
-		screenray.pos.x.d = player.pos.x.d + player.dir.x.d;
-		screenray.pos.y.d = player.pos.y.d + player.dir.y.d;
+		screenray.pos.x = player.pos.x + player.dir.x;
+		screenray.pos.y = player.pos.y + player.dir.y;
 	}
 	if ((player.movement&0b00000010)!=0) {
-		screenray.pos.x.d = player.pos.x.d - player.dir.x.d;
-		screenray.pos.y.d = player.pos.y.d - player.dir.y.d;
+		screenray.pos.x = player.pos.x - player.dir.x;
+		screenray.pos.y = player.pos.y - player.dir.y;
 	}
 	if ((player.movement&0b00000100)!=0) {
-		screenray.pos.x.d = player.pos.x.d + player.rgt.x.d;
-		screenray.pos.y.d = player.pos.y.d + player.rgt.y.d;
+		screenray.pos.x = player.pos.x + player.rgt.x;
+		screenray.pos.y = player.pos.y + player.rgt.y;
 	}
 	if ((player.movement&0b00001000)!=0) {
-		screenray.pos.x.d = player.pos.x.d - player.rgt.x.d;
-		screenray.pos.y.d = player.pos.y.d - player.rgt.y.d;
+		screenray.pos.x = player.pos.x - player.rgt.x;
+		screenray.pos.y = player.pos.y - player.rgt.y;
 	}
 	if ((player.movement&0b00010000)!=0) {
 		player.angfwd += 1;
@@ -215,24 +210,24 @@ void handlemovement() {
 		player.angfwd -= 1;
 		player.angrgt -= 1;
 	}
-	u = screenray.pos.x.u>>FPS;
-	v = screenray.pos.y.u>>FPS;
-	i = (v<<5)+u;
+	u = screenray.pos.x>>FPS;
+	v = screenray.pos.y>>FPS;
+	i = (v<<LEVELDIM)+u;
 	m = TILEDROOM[i];
 	if (m==0) {
 		player.pos = screenray.pos;
 	}
 	player.movement = 0;
-	player.loc.x.u = player.pos.x.u>>FPS;
-	player.loc.y.u = player.pos.y.u>>FPS;
+	player.loc.x = player.pos.x>>FPS;
+	player.loc.y = player.pos.y>>FPS;
 	if (player.angfwd<0) {
-		player.angfwd = 31;
-	} else if (player.angfwd>31) {
+		player.angfwd = 7;
+	} else if (player.angfwd>7) {
 		player.angfwd = 0;
 	}
 	if (player.angrgt<0) {
-		player.angrgt = 31;
-	} else if (player.angrgt>31) {
+		player.angrgt = 7;
+	} else if (player.angrgt>7) {
 		player.angrgt = 0;
 	}
 	player.indfwd = (player.angfwd<<5) + (player.angfwd<<3);
@@ -242,7 +237,7 @@ void handlemovement() {
 }
 
 void drawvline(bool hit) {
-	p = (screenray.pos.l.u>>FPS)>>2;
+	p = (screenray.pos.l>>FPS)>>2;
 	if (p>12) {
 		p = 12;
 	}
@@ -255,9 +250,9 @@ void drawvline(bool hit) {
 	if (hit) {
 		v2 = 93;
 		c2 = m;
-		if (h>12) {
+		if (h>402) {
 			v2 = 105;
-		} else if (h<-12) {
+		} else if (h<-402) {
 			v2 = 95;
 		}
 		if (m==1) {
@@ -340,7 +335,6 @@ void main(void) {
 	mouse_install(&mouse_def_callbacks, mouse_static_stddrv);
 
 	bzero(TILEDROOM, TILEDSIZE);
-	bzero(TILEDSDF, TILEDSIZE);
 	bzero(RAYTABLE, RAYSIZE);
 	bzero(TEXT_RAM, SCREENSIZE);
 	bzero(SCREEN_RAM, SCREENSIZE);
@@ -348,15 +342,12 @@ void main(void) {
 	k = loadfile("tiledroom", (unsigned)TILEDROOM);
 	l = cbm_k_readst();
 	printf("room: %x - %x: %u, %u, %u, %u\n",l,k,TILEDROOM[0],TILEDROOM[1],TILEDROOM[2],TILEDROOM[3]);
-	k = loadfile("tiledsdf", (unsigned)TILEDSDF);
-	l = cbm_k_readst();
-	printf("sdf: %x - %x: %u, %u, %u, %u\n",l,k,TILEDSDF[0],TILEDSDF[1],TILEDSDF[2],TILEDSDF[3]);
 	k = loadfile("tiledata", (unsigned)RAYTABLE);
 	l = cbm_k_readst();
-	printf("ray: %x - %x: %d, %d, %d, %d\n",l,k,RAYTABLE[0].x.d,RAYTABLE[0].y.d,RAYTABLE[1].x.d,RAYTABLE[1].y.d);
+	printf("ray: %x - %x: %d, %d, %d, %d\n",l,k,RAYTABLE[0].x,RAYTABLE[0].y,RAYTABLE[0].a,RAYTABLE[0].l);
 	k = loadfile("tiledata2", (unsigned)RAYTABLE2);
 	l = cbm_k_readst();
-	printf("ray2: %x - %x: %d, %d, %d, %d\n",l,k,RAYTABLE2[0].x.d,RAYTABLE2[0].y.d,RAYTABLE2[1].x.d,RAYTABLE2[1].y.d);
+	printf("ray2: %x - %x: %d, %d, %d, %d\n",l,k,RAYTABLE2[0].x,RAYTABLE2[0].y,RAYTABLE2[0].a,RAYTABLE2[0].l);
 	k = loadfile("tileimage", (unsigned)IMAGE_RAM);
 	l = cbm_k_readst();
 	printf("image: %x - %x: %d, %d, %d, %d\n",l,k,IMAGE_RAM[0],IMAGE_RAM[1],IMAGE_RAM[2],IMAGE_RAM[3]);
@@ -424,54 +415,69 @@ void main(void) {
 		for (l=shufflestep;l<SCREENWIDTH;l+=8) {
 			screenray.pos = player.pos;
 			screenray.dir = RAYTABLE[k-l];
+			screenray.dir.l = RAYTABLE[k-20].l;
 			f = false;
 			do {
-				u = screenray.pos.x.u>>FPS;
-				v = screenray.pos.y.u>>FPS;
-				i = (v<<5)+u;
+				u = screenray.pos.x>>FPS;
+				v = screenray.pos.y>>FPS;
+				i = (v<<LEVELDIM)+u;
 				m = TILEDROOM[i];
 				if (m==0) {
-					screenray.pos.x.d += screenray.dir.x.d;
-					screenray.pos.y.d += screenray.dir.y.d;
-					screenray.pos.l.u += screenray.dir.l.u;
+					screenray.pos.x += screenray.dir.x;
+					screenray.pos.y += screenray.dir.y;
+					screenray.pos.l += screenray.dir.l;
 				} else {
 					f = true;
-					COLUMN_ZBUFFER[l].l.u = screenray.pos.l.u;
-					x = (screenray.pos.x.d<<4)&0b01110000;
-					y = (screenray.pos.y.d<<4)&0b01110000;
-					z = x;
-					w = y;
-					while(((z&0b10000000)==(x&0b10000000))&&((w&0b10000000)==(y&0b10000000))) {
-						z = x;
-						w = y;
-						x -= screenray.dir.x.d;
-						y -= screenray.dir.y.d;
-					}
-					COLUMN_ZBUFFER[l].x.d = z;
-					COLUMN_ZBUFFER[l].y.d = w;
+					screenray.dir.x = screenray.dir.x>>4;
+					screenray.dir.y = screenray.dir.y>>4;
+					screenray.dir.l = screenray.dir.l>>4;
+					f2 = false;
+					do {
+						x = screenray.pos.x>>FPS;
+						y = screenray.pos.y>>FPS;
+						j = (y<<LEVELDIM)+x;
+						n = TILEDROOM[j];
+						if (n!=0) {
+							u = x;
+							v = y;
+							i = j;
+							m = n;
+							screenray.pos.x -= screenray.dir.x;
+							screenray.pos.y -= screenray.dir.y;
+							screenray.pos.l -= screenray.dir.l;
+						} else {
+							f2 = true;
+						}
+					} while(!f2);
+					COLUMN_ZBUFFER[l].x = screenray.pos.x;
+					COLUMN_ZBUFFER[l].y = screenray.pos.y;
+					COLUMN_ZBUFFER[l].l = screenray.pos.l;
+					z = screenray.pos.x&0x00FF;
+					w = screenray.pos.y&0x00FF;
 					x = z;
 					y = w;
-					if (z>63) {
-						x = 127 - z;
-					}
-					if (w>63) {
-						y = 127 - w;
-					}
+					if (z>127) { x = 255 - z; }
+					if (w>127) { y = 255 - w; }
 					if (x<y) {
-						if (x<z) {
-							g = -13;
+						if (z>127) {
+							g = 402;
 						} else {
-							g = 13;
+							g = -402;
 						}
 					} else {
-						if (y<w) {
-							g = 0;
+						if (w>127) {
+							g = -804;
 						} else {
-							g = -25;
+							g = 0;
 						}
 					}
-					h = screenray.dir.a.d - g;
-					COLUMN_ZBUFFER[l].a.d = h;
+					h = screenray.dir.a - g;
+					//if (h>804) {
+					//	h -= 804;
+					//} else if (h<-804) {
+					//	h += 804;
+					//}
+					COLUMN_ZBUFFER[l].a = h;
 					drawvline(true);
 				}
 			} while(!f);
@@ -480,7 +486,7 @@ void main(void) {
 		timedif = time2 - time1;
 		sprintf(ostr, "jcd: %d     ",timedif);
 		cputsxy(30, 24, ostr);
-		sprintf(ostr, "x,y: %u,%u  ",player.loc.x.u,player.loc.y.u);
+		sprintf(ostr, "x,y: %d,%d  ",player.loc.x,player.loc.y);
 		cputsxy(15, 24, ostr);
 		memcpy(TEXT_RAM+960, DEFAULT_TEXT_RAM+960, 40);
 	}
@@ -539,7 +545,7 @@ void main(void) {
 	textcolor(COLOR_LIGHTBLUE);
 	printf("CZ:");
 	for (l=0;l<SCREENWIDTH;l++) {
-		printf("%u:%d#%d:%d, ",COLUMN_ZBUFFER[l].l.u,COLUMN_ZBUFFER[l].a.d,COLUMN_ZBUFFER[l].x.d,COLUMN_ZBUFFER[l].y.d);
+		printf("%u:%d#%d:%d, ",COLUMN_ZBUFFER[l].l,COLUMN_ZBUFFER[l].a,COLUMN_ZBUFFER[l].x,COLUMN_ZBUFFER[l].y);
 	}
 	printf("\n");
 	printf("exit.\n");
