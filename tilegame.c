@@ -64,7 +64,7 @@ char *ostr = "key:          ";
 struct mouse_info mouseinfo, mouseold;
 unsigned char joycount;
 
-ent player = {2<<FPS,3<<FPS,0,0,1<<FPS,0<<FPS,0,0,0<<FPS,1<<FPS,0,0,2,3,0,0,6,0,0,0,0};
+ent player = {2<<FPS,3<<FPS,0,0,1<<FPS,0<<FPS,0,0,0<<FPS,1<<FPS,0,0,2,3,0,0,24,0,0,0,0};
 ray screenray = {0};
 
 long gettime() {
@@ -221,19 +221,75 @@ void handlemovement() {
 	player.loc.x = player.pos.x>>FPS;
 	player.loc.y = player.pos.y>>FPS;
 	if (player.angfwd<0) {
-		player.angfwd = 7;
-	} else if (player.angfwd>7) {
+		player.angfwd = 31;
+	} else if (player.angfwd>31) {
 		player.angfwd = 0;
 	}
 	if (player.angrgt<0) {
-		player.angrgt = 7;
-	} else if (player.angrgt>7) {
+		player.angrgt = 31;
+	} else if (player.angrgt>31) {
 		player.angrgt = 0;
 	}
 	player.indfwd = (player.angfwd<<5) + (player.angfwd<<3);
-	player.dir = RAYTABLE[player.indfwd+20];
 	player.indrgt = (player.angrgt<<5) + (player.angrgt<<3);
-	player.rgt = RAYTABLE[player.indrgt+20];
+
+	k = player.indfwd + 20;
+	switch(player.angfwd) {
+		case 0: case 1: case 2: case 3: case 4: case 5: case 6: case 7:
+			player.dir = RAYTABLE[k];
+		break;
+		case 8: case 9: case 10: case 11: case 12: case 13: case 14: case 15:
+			player.dir.x = -RAYTABLE[k-320].y;
+			player.dir.y = RAYTABLE[k-320].x;
+			player.dir.a = RAYTABLE[k-320].a - 402;
+			player.dir.l = RAYTABLE[k-320].l;
+		break;
+		case 16: case 17: case 18: case 19: case 20: case 21: case 22: case 23:
+			player.dir.x = -RAYTABLE[k-640].x;
+			player.dir.y = -RAYTABLE[k-640].y;
+			player.dir.a = RAYTABLE[k-640].a - 802;
+			if (player.dir.a<-802) { player.dir.a += 1604;}
+			player.dir.l = RAYTABLE[k-640].l;
+		break;
+		case 24: case 25: case 26: case 27: case 28: case 29: case 30: case 31:
+			player.dir.x = RAYTABLE[k-960].y;
+			player.dir.y = -RAYTABLE[k-960].x;
+			player.dir.a = RAYTABLE[k-960].a + 402;
+			player.dir.l = RAYTABLE[k-960].l;
+		break;
+		default:
+			player.dir = RAYTABLE[0];
+		break;
+	}
+
+	k = player.indrgt + 20;
+	switch(player.angrgt) {
+		case 0: case 1: case 2: case 3: case 4: case 5: case 6: case 7:
+			player.rgt = RAYTABLE[k];
+		break;
+		case 8: case 9: case 10: case 11: case 12: case 13: case 14: case 15:
+			player.rgt.x = -RAYTABLE[k-320].y;
+			player.rgt.y = RAYTABLE[k-320].x;
+			player.rgt.a = RAYTABLE[k-320].a - 402;
+			player.rgt.l = RAYTABLE[k-320].l;
+		break;
+		case 16: case 17: case 18: case 19: case 20: case 21: case 22: case 23:
+			player.rgt.x = -RAYTABLE[k-640].x;
+			player.rgt.y = -RAYTABLE[k-640].y;
+			player.rgt.a = RAYTABLE[k-640].a - 802;
+			if (player.rgt.a<-802) { player.rgt.a += 1604;}
+			player.rgt.l = RAYTABLE[k-640].l;
+		break;
+		case 24: case 25: case 26: case 27: case 28: case 29: case 30: case 31:
+			player.rgt.x = RAYTABLE[k-960].y;
+			player.rgt.y = -RAYTABLE[k-960].x;
+			player.rgt.a = RAYTABLE[k-960].a + 402;
+			player.rgt.l = RAYTABLE[k-960].l;
+		break;
+		default:
+			player.rgt = RAYTABLE[0];
+		break;
+	}
 }
 
 void drawvline(bool hit) {
@@ -414,8 +470,35 @@ void main(void) {
 		k = player.indfwd + (SCREENWIDTH-1);
 		for (l=shufflestep;l<SCREENWIDTH;l+=8) {
 			screenray.pos = player.pos;
-			screenray.dir = RAYTABLE[k-l];
-			screenray.dir.l = RAYTABLE[k-20].l;
+			switch(player.angfwd) {
+				case 0: case 1: case 2: case 3: case 4: case 5: case 6: case 7:
+					screenray.dir = RAYTABLE[k-l];
+					screenray.dir.l = RAYTABLE[k-20].l;
+				break;
+				case 8: case 9: case 10: case 11: case 12: case 13: case 14: case 15:
+					screenray.dir.x = -RAYTABLE[k-320-l].y;
+					screenray.dir.y = RAYTABLE[k-320-l].x;
+					screenray.dir.a = RAYTABLE[k-320-l].a - 402;
+					screenray.dir.l = RAYTABLE[k-320-20].l;
+				break;
+				case 16: case 17: case 18: case 19: case 20: case 21: case 22: case 23:
+					screenray.dir.x = -RAYTABLE[k-640-l].x;
+					screenray.dir.y = -RAYTABLE[k-640-l].y;
+					screenray.dir.a = RAYTABLE[k-640-l].a - 802;
+					if (screenray.dir.a<-802) { screenray.dir.a += 802;}
+					screenray.dir.l = RAYTABLE[k-640-20].l;
+				break;
+				case 24: case 25: case 26: case 27: case 28: case 29: case 30: case 31:
+					screenray.dir.x = RAYTABLE[k-960-l].y;
+					screenray.dir.y = -RAYTABLE[k-960-l].x;
+					screenray.dir.a = RAYTABLE[k-960-l].a + 402;
+					screenray.dir.l = RAYTABLE[k-960-20].l;
+				break;
+				default:
+					screenray.dir = RAYTABLE[0];
+				break;
+			}
+
 			f = false;
 			do {
 				u = screenray.pos.x>>FPS;
@@ -433,6 +516,9 @@ void main(void) {
 					screenray.dir.l = screenray.dir.l>>4;
 					f2 = false;
 					do {
+						screenray.pos.x -= screenray.dir.x;
+						screenray.pos.y -= screenray.dir.y;
+						screenray.pos.l -= screenray.dir.l;
 						x = screenray.pos.x>>FPS;
 						y = screenray.pos.y>>FPS;
 						j = (y<<LEVELDIM)+x;
@@ -442,9 +528,6 @@ void main(void) {
 							v = y;
 							i = j;
 							m = n;
-							screenray.pos.x -= screenray.dir.x;
-							screenray.pos.y -= screenray.dir.y;
-							screenray.pos.l -= screenray.dir.l;
 						} else {
 							f2 = true;
 						}
@@ -472,11 +555,11 @@ void main(void) {
 						}
 					}
 					h = screenray.dir.a - g;
-					//if (h>804) {
-					//	h -= 804;
-					//} else if (h<-804) {
-					//	h += 804;
-					//}
+					if (h>804) {
+						h -= 1604;
+					} else if (h<-804) {
+						h += 1604;
+					}
 					COLUMN_ZBUFFER[l].a = h;
 					drawvline(true);
 				}

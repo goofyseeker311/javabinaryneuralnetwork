@@ -29,7 +29,7 @@ fclose(fn);
 
 fov = 70 * pi/180;
 len = atan(fov);
-drs = 8;
+drs = 32;
 lim = 8;
 stp = 40;
 a2 = len*(-1:(2/(stp-1)):1);
