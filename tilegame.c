@@ -43,7 +43,8 @@ const unsigned char tgipalette[2] = {TGI_COLOR_BLACK, TGI_COLOR_LIGHTBLUE};
 #define CHARACTER_ROM_CONFIG ((unsigned char*)0x0001)
 #define JIFFY_CLOCK ((unsigned char*)0x00A0)
 #define DEFAULT_TEXT_RAM ((unsigned char*)0x0400)
-#define TILEDROOM ((unsigned char*)0x6000)
+#define TILEDROOM ((unsigned char*)0x5000)
+#define TILEDSDF ((unsigned char*)0x6000)
 #define RAYTABLE ((charvec*)0x7800)
 #define RAYTABLE2 ((charvec*)0x7E00)
 #define CHARACTER_RAM ((unsigned char*)0x8000)
@@ -385,6 +386,9 @@ void main(void) {
 	k = loadfile("tiledroom", (unsigned)TILEDROOM);
 	l = cbm_k_readst();
 	printf("room: %x - %x: %u, %u, %u, %u\n",l,k,TILEDROOM[0],TILEDROOM[1],TILEDROOM[2],TILEDROOM[3]);
+	k = loadfile("tiledsdf", (unsigned)TILEDSDF);
+	l = cbm_k_readst();
+	printf("sdf: %x - %x: %u, %u, %u, %u\n",l,k,TILEDSDF[0],TILEDSDF[1],TILEDSDF[2],TILEDSDF[3]);
 	k = loadfile("tiledata", (unsigned)RAYTABLE);
 	l = cbm_k_readst();
 	printf("ray: %x - %x: %d, %d, %d, %d\n",l,k,RAYTABLE[0].x,RAYTABLE[0].y,RAYTABLE[0].a,RAYTABLE[0].l);
@@ -465,9 +469,10 @@ void main(void) {
 				i = (v<<LEVELDIM)+u;
 				m = TILEDROOM[i];
 				if (m==0) {
-					screenray.pos.x += screenray.dir.x;
-					screenray.pos.y += screenray.dir.y;
-					screenray.pos.l += screenray.dir.l;
+					n = TILEDSDF[i];
+					screenray.pos.x += screenray.dir.x<<n;
+					screenray.pos.y += screenray.dir.y<<n;
+					screenray.pos.l += screenray.dir.l<<n;
 				} else {
 					f = true;
 					screenray.dir.x = screenray.dir.x>>4;

@@ -130,7 +130,7 @@ tiledroom(tiledroom<0) = 0;
 
 fn = "tiledroom.prg";
 fopen(fn,'w');
-fwrite(fn,cast(0x6000,'uint16'),'uint16',0,'l');
+fwrite(fn,cast(0x5000,'uint16'),'uint16',0,'l');
 fwrite(fn,cast(tiledroom','uint8'),'uint8',0,'l');
 fclose(fn);
 
