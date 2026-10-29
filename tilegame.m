@@ -12,19 +12,19 @@ b = [sin(a);cos(a)];
 ba = vectordirection(b);
 bb = vecnorm(b);
 c = zeros(1,size(b,2)*4);
-c(1:4:end) = b(1,:);
-c(2:4:end) = b(2,:);
-c(3:4:end) = ba;
-c(4:4:end) = bb;
-d = round(c.*2^8);
-figure(1); scatter(d(1:4:end),d(2:4:end)); ylim([-256 256]); daspect([1 1]);
-figure(2); plot(d(3:4:end),'o-'); xlim([1 128]); ylim([-810 810]);
+c(1:4:end) = b(1,:).*2^7;
+c(2:4:end) = b(2,:).*2^7;
+c(3:4:end) = ba.*2^5;
+c(4:4:end) = bb.*2^7;
+d = round(c);
+figure(1); scatter(d(1:4:end),d(2:4:end)); xlim([-128 128]); ylim([-128 128]); daspect([1 1]);
+figure(2); plot(d(3:4:end),'o-'); xlim([1 128]); ylim([-128 128]);
 figure(3); plot(d(4:4:end),'o-'); xlim([1 128]); ylim([0 256]);
 
 fn = "tiledata2.prg";
 fopen(fn,'w');
-fwrite(fn,cast(0x7C00,'uint16'),'uint16',0,'l');
-fwrite(fn,cast(d','int16'),'int16',0,'l');
+fwrite(fn,cast(0x7E00,'uint16'),'uint16',0,'l');
+fwrite(fn,cast(d','int8'),'int8',0,'l');
 fclose(fn);
 
 fov = 70 * pi/180;
@@ -43,18 +43,18 @@ for n = 1:lim
   rd3 = vecnorm(rd);
   figure(n+3); scatter(rd(1,:),rd(2,:)); xlim([-1.4 1.4]); ylim([-1.4 1.4]); daspect([1 1]);
   rda = zeros(1,size(rd,2)*4);
-  rda(1:4:end) = rd(1,:);
-  rda(2:4:end) = rd(2,:);
-  rda(3:4:end) = rd2;
-  rda(4:4:end) = rd3;
+  rda(1:4:end) = rd(1,:).*2^6;
+  rda(2:4:end) = rd(2,:).*2^6;
+  rda(3:4:end) = rd2.*2^5;
+  rda(4:4:end) = rd3.*2^6;
   b2a = [b2a; rda];
 endfor
-c2 = round(b2a*2^8);
+c2 = round(b2a);
 
 fn = "tiledata.prg";
 fopen(fn,'w');
-fwrite(fn,cast(0x7000,'uint16'),'uint16',0,'l');
-fwrite(fn,cast(c2','int16'),'int16',0,'l');
+fwrite(fn,cast(0x7800,'uint16'),'uint16',0,'l');
+fwrite(fn,cast(c2','int8'),'int8',0,'l');
 fclose(fn);
 
 tileddim = 64;

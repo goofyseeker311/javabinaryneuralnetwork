@@ -12,6 +12,9 @@
 #undef DYN_DRV
 #define DYN_DRV 0
 
+typedef struct charvector {
+	signed char x, y, a, l;
+} charvec;
 typedef struct intvector {
 	int x, y, a, l;
 } intvec;
@@ -41,8 +44,8 @@ const unsigned char tgipalette[2] = {TGI_COLOR_BLACK, TGI_COLOR_LIGHTBLUE};
 #define JIFFY_CLOCK ((unsigned char*)0x00A0)
 #define DEFAULT_TEXT_RAM ((unsigned char*)0x0400)
 #define TILEDROOM ((unsigned char*)0x6000)
-#define RAYTABLE ((intvec*)0x7000)
-#define RAYTABLE2 ((intvec*)0x7C00)
+#define RAYTABLE ((charvec*)0x7800)
+#define RAYTABLE2 ((charvec*)0x7E00)
 #define CHARACTER_RAM ((unsigned char*)0x8000)
 #define TEXT_RAM ((unsigned char*)0x8800)
 #define SPRITE_RAM ((unsigned char*)0x8BF8)
@@ -187,30 +190,35 @@ void handlejoystick() {
 void cameradirection(intvec* ivec, int ang, int ofs) {
 	switch(ang) {
 		case 0: case 1: case 2: case 3: case 4: case 5: case 6: case 7:
-			*ivec = RAYTABLE[k-l];
-			ivec->l = RAYTABLE[k-ofs].l;
+			ivec->x = RAYTABLE[k-l].x<<1;
+			ivec->y = RAYTABLE[k-l].y<<1;
+			ivec->a = RAYTABLE[k-l].a<<4;
+			ivec->l = RAYTABLE[k-ofs].l<<1;
 		break;
 		case 8: case 9: case 10: case 11: case 12: case 13: case 14: case 15:
-			ivec->x = -RAYTABLE[k-320-l].y;
-			ivec->y = RAYTABLE[k-320-l].x;
-			ivec->a = RAYTABLE[k-320-l].a - 402;
-			ivec->l = RAYTABLE[k-320-ofs].l;
+			ivec->x = -RAYTABLE[k-320-l].y<<1;
+			ivec->y = RAYTABLE[k-320-l].x<<1;
+			ivec->a = (RAYTABLE[k-320-l].a<<4) - 402;
+			ivec->l = RAYTABLE[k-320-ofs].l<<1;
 		break;
 		case 16: case 17: case 18: case 19: case 20: case 21: case 22: case 23:
-			ivec->x = -RAYTABLE[k-640-l].x;
-			ivec->y = -RAYTABLE[k-640-l].y;
-			ivec->a = RAYTABLE[k-640-l].a - 802;
+			ivec->x = -RAYTABLE[k-640-l].x<<1;
+			ivec->y = -RAYTABLE[k-640-l].y<<1;
+			ivec->a = (RAYTABLE[k-640-l].a<<4) - 802;
 			if (ivec->a<-802) { ivec->a += 1604;}
-			ivec->l = RAYTABLE[k-640-ofs].l;
+			ivec->l = RAYTABLE[k-640-ofs].l<<1;
 		break;
 		case 24: case 25: case 26: case 27: case 28: case 29: case 30: case 31:
-			ivec->x = RAYTABLE[k-960-l].y;
-			ivec->y = -RAYTABLE[k-960-l].x;
-			ivec->a = RAYTABLE[k-960-l].a + 402;
-			ivec->l = RAYTABLE[k-960-ofs].l;
+			ivec->x = RAYTABLE[k-960-l].y<<1;
+			ivec->y = -RAYTABLE[k-960-l].x<<1;
+			ivec->a = (RAYTABLE[k-960-l].a<<4) + 402;
+			ivec->l = RAYTABLE[k-960-ofs].l<<1;
 		break;
 		default:
-			*ivec = RAYTABLE[0];
+			ivec->x = RAYTABLE[0].x<<1;
+			ivec->y = RAYTABLE[0].y<<1;
+			ivec->a = RAYTABLE[0].a<<4;
+			ivec->l = RAYTABLE[0].l<<1;
 		break;
 	}
 }
@@ -442,12 +450,12 @@ void main(void) {
 		handlemouse();
 		handlejoystick();
 		handlemovement();
-		shufflestep+=9;
-		if (shufflestep>=16) {
-			shufflestep-=16;
+		shufflestep+=5;
+		if (shufflestep>=8) {
+			shufflestep-=8;
 		}
 		k = player.indfwd + (SCREENWIDTH-1);
-		for (l=shufflestep;l<SCREENWIDTH;l+=16) {
+		for (l=shufflestep;l<SCREENWIDTH;l+=8) {
 			screenray.pos = player.pos;
 			cameradirection(&screenray.dir, player.angfwd, 20);
 			f = false;
