@@ -518,9 +518,9 @@ void main(void) {
 						}
 					} else {
 						if (w>127) {
-							g = -804;
-						} else {
 							g = 0;
+						} else {
+							g = -804;
 						}
 					}
 					h = screenray.dir.a - g;
