@@ -34,6 +34,7 @@ const unsigned char tgipalette[2] = {TGI_COLOR_BLACK, TGI_COLOR_LIGHTBLUE};
 #define SCREENWIDTH 40
 #define SCREENHEIGHT 25
 #define SCREENSIZE 1000
+#define SCREENDEPTH 1
 #define LEVELDIM 6
 #define TILEDDIM 64
 #define TILEDSIZE 4096
@@ -52,6 +53,7 @@ const unsigned char tgipalette[2] = {TGI_COLOR_BLACK, TGI_COLOR_LIGHTBLUE};
 #define SPRITE_RAM ((unsigned char*)0x8BF8)
 #define SCREEN_RAM ((unsigned char*)0x8C00)
 #define COLUMN_ZBUFFER ((intvec*)0x9000)
+#define COLUMN_ZHEIGHT ((int*)0x9140)
 #define IMAGE_RAM ((unsigned char*)0x9C00)
 #define BITMAP_RAM ((unsigned char*)0xA000)
 #define CHARACTER_ROM ((unsigned char*)0xD000)
@@ -281,7 +283,7 @@ void handlemovement() {
 }
 
 void drawvline(bool hit) {
-	p = (screenray.pos.l>>FPS)>>2;
+	p = 12 - COLUMN_ZHEIGHT[screenray.pos.l>>FPS];
 	if (p>12) {
 		p = 12;
 	}
@@ -398,6 +400,9 @@ void main(void) {
 	k = loadfile("tileimage", (unsigned)IMAGE_RAM);
 	l = cbm_k_readst();
 	printf("image: %x - %x: %d, %d, %d, %d\n",l,k,IMAGE_RAM[0],IMAGE_RAM[1],IMAGE_RAM[2],IMAGE_RAM[3]);
+	for (l=0;l<128;l++) {
+		COLUMN_ZHEIGHT[l] = (1<<7)/(l+10);
+	}
 	cputcxy(0,0,'a');
 	cgetc();
 
