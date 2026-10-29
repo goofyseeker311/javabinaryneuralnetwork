@@ -296,10 +296,10 @@ void drawvline(bool hit) {
 	if (hit) {
 		v2 = 93;
 		c2 = m;
-		if (h>402) {
-			v2 = 105;
-		} else if (h<-402) {
+		if (h>201) {
 			v2 = 95;
+		} else if (h<-201) {
+			v2 = 105;
 		}
 		if (m==1) {
 			switch(p) {
