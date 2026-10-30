@@ -72,6 +72,7 @@ unsigned char joycount;
 
 ent player = {2<<FPS,3<<FPS,0,0,1<<FPS,0<<FPS,0,0,0<<FPS,1<<FPS,0,0,2,3,0,0,24,0,0,0,0};
 ray screenray = {0};
+intvec screenray1={0}, screenray2={0}, screenray3={0}, screenray4={0}, screenray5={0};
 
 long gettime() {
 	return (((long)JIFFY_CLOCK[2])<<16) | (((long)JIFFY_CLOCK[1])<<8) | ((long)JIFFY_CLOCK[0]);
@@ -467,6 +468,21 @@ void main(void) {
 		for (l=shufflestep;l<SCREENWIDTH;l+=8) {
 			screenray.pos = player.pos;
 			cameradirection(&screenray.dir, player.angfwd, 20);
+			screenray1.x = screenray.dir.x<<1;
+			screenray1.y = screenray.dir.y<<1;
+			screenray1.l = screenray.dir.l<<1;
+			screenray2.x = screenray1.x<<1;
+			screenray2.y = screenray1.y<<1;
+			screenray2.l = screenray1.l<<1;
+			screenray3.x = screenray2.x<<1;
+			screenray3.y = screenray2.y<<1;
+			screenray3.l = screenray2.l<<1;
+			screenray4.x = screenray3.x<<1;
+			screenray4.y = screenray3.y<<1;
+			screenray4.l = screenray3.l<<1;
+			screenray5.x = screenray4.x<<1;
+			screenray5.y = screenray4.y<<1;
+			screenray5.l = screenray4.l<<1;
 			f = false;
 			do {
 				u = screenray.pos.x>>FPS;
@@ -475,9 +491,38 @@ void main(void) {
 				m = TILEDROOM[i];
 				if (m==0) {
 					n = TILEDSDF[i];
-					screenray.pos.x += screenray.dir.x<<n;
-					screenray.pos.y += screenray.dir.y<<n;
-					screenray.pos.l += screenray.dir.l<<n;
+					switch(n) {
+						case 5:
+							screenray.pos.x += screenray5.x;
+							screenray.pos.y += screenray5.y;
+							screenray.pos.l += screenray5.l;
+						break;
+						case 4:
+							screenray.pos.x += screenray4.x;
+							screenray.pos.y += screenray4.y;
+							screenray.pos.l += screenray4.l;
+						break;
+						case 3:
+							screenray.pos.x += screenray3.x;
+							screenray.pos.y += screenray3.y;
+							screenray.pos.l += screenray3.l;
+						break;
+						case 2:
+							screenray.pos.x += screenray2.x;
+							screenray.pos.y += screenray2.y;
+							screenray.pos.l += screenray2.l;
+						break;
+						case 1:
+							screenray.pos.x += screenray1.x;
+							screenray.pos.y += screenray1.y;
+							screenray.pos.l += screenray1.l;
+						break;
+						default:
+							screenray.pos.x += screenray.dir.x;
+							screenray.pos.y += screenray.dir.y;
+							screenray.pos.l += screenray.dir.l;
+						break;
+					}
 				} else {
 					f = true;
 					screenray.dir.x = screenray.dir.x>>4;
