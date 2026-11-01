@@ -68,10 +68,14 @@ endfor
 ray(:,:,3) = 1.*mult;
 
 c = 0;
+timeid = tic();
 while ((!all(found(:)))&&(++c<10))
   hit = hit | ((pos(:,:,1)>objaabb(1,1)) & (pos(:,:,1)<objaabb(1,2)) & (pos(:,:,2)>objaabb(2,1)) & (pos(:,:,2)<objaabb(2,2)) & (pos(:,:,3)>objaabb(3,1)) & (pos(:,:,3)<objaabb(3,2)));
   pos += ray;
 endwhile
+timedif = toc(timeid);
+printf("%dms\n",timedif*1000);
+
 sdfimage(:,:,1) = hit;
 sdfimage(:,:,2) = hit;
 sdfimage(:,:,3) = hit;
